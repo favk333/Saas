@@ -98,3 +98,12 @@ export function feeInfoSafe(): { label: string | null; taxNumbers: FeeConfig["ta
 
 /** "123456789RT0001" → "123456789 RT0001" */
 export const spacedTaxNumber = (n: string) => n.replace(/^(\d+)([A-Z]{2}\d{4})$/, "$1 $2");
+
+/** Identité de la plateforme, imprimée sur les relevés de commissions. */
+export function platformIdentity() {
+  return {
+    name: process.env.PLATFORM_LEGAL_NAME?.trim() || "Chantier",
+    address: process.env.PLATFORM_ADDRESS?.trim() || null,
+    taxNumbers: feeInfoSafe().taxNumbers,
+  };
+}
