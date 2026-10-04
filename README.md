@@ -6,8 +6,13 @@ Stack : Next.js (App Router) · Tailwind CSS v4 · Supabase · Stripe · Twilio.
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+cp .env.example .env.local   # Supabase, Twilio…
+npm run dev                  # http://localhost:3000
 ```
+
+Sans `.env.local`, l'app tourne en **mode démo** : données fictives, pas de connexion, pas d'enregistrement.
+
+Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` aux Redirect URLs.
 
 ## Structure
 
@@ -22,24 +27,29 @@ app/
   (app)/                         écrans authentifiés
     page.tsx                     ✓ Dashboard
     actions.ts                   ✓ server actions (relance SMS : stub)
-    devis/nouveau/page.tsx         création devis
+    devis/nouveau/page.tsx       ✓ création devis
+    devis/nouveau/actions.ts     ✓ enregistrement + envoi SMS
     devis/[id]/page.tsx            détail devis / facture
     devis/[id]/signer/page.tsx     signature tactile sur place
-  (auth)/login/page.tsx            connexion (magic link Supabase)
+  (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
+  auth/callback/route.ts         ✓ retour du lien magique
   s/[token]/page.tsx               signature à distance (lien SMS, public)
   api/
     cron/relances/route.ts         relances J+3 / J+7 (Vercel Cron)
     webhooks/stripe/route.ts       paiement reçu → statut "paid"
 components/
   dashboard/                     ✓ invoice-row, status-badge
-  invoice/                         formulaire, lignes d'articles
+  quote/quote-form.tsx           ✓ formulaire devis (totaux en direct)
   signature/                       pad de signature (canvas)
 lib/
   types.ts                       ✓ types + statut dérivé "En retard"
   format.ts                      ✓ montants €, dates relatives
-  data.ts                        ✓ données démo (→ Supabase)
-  supabase/{server,client}.ts      clients Supabase (SSR)
-  stripe.ts  twilio.ts             intégrations
+  quote.ts                       ✓ prix "1 250,50", téléphone → E.164, totaux
+  data.ts                        ✓ requêtes Supabase (+ données démo)
+  supabase/{config,server}.ts    ✓ client Supabase SSR
+  twilio.ts                      ✓ envoi SMS (API REST)
+  stripe.ts                        paiement
+proxy.ts                         ✓ session Supabase + redirection /login
 supabase/
   migrations/0001_init.sql       ✓ profiles, clients, invoices, line_items + RLS
 ```

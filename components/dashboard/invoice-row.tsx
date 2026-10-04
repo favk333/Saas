@@ -24,6 +24,7 @@ function detail(inv: Invoice, status: DisplayStatus, now: Date) {
 
 export function InvoiceRow({ invoice, now }: { invoice: Invoice; now: Date }) {
   const status = displayStatus(invoice, now);
+  const info = detail(invoice, status, now);
   const canRemind = status === "sent" || status === "signed" || status === "late";
 
   return (
@@ -36,8 +37,12 @@ export function InvoiceRow({ invoice, now }: { invoice: Invoice; now: Date }) {
       <div className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
         <StatusBadge status={status} />
         <span className="tabular-nums">{invoice.invoice_number ?? invoice.quote_number}</span>
-        <span aria-hidden>·</span>
-        <span className="truncate">{detail(invoice, status, now)}</span>
+        {info && (
+          <>
+            <span aria-hidden>·</span>
+            <span className="truncate">{info}</span>
+          </>
+        )}
       </div>
 
       {canRemind && (
