@@ -1,6 +1,7 @@
 import { createAdminClient } from "./supabase/admin";
 import { createClient, getUser, getUserId } from "./supabase/server";
 import { isSupabaseConfigured } from "./supabase/config";
+import { platformFee } from "./fees";
 import { computeTotals, type TaxRegime } from "./quote";
 import { INVOICE_DETAIL_SELECT, type Invoice, type InvoiceDetail } from "./types";
 
@@ -138,7 +139,12 @@ function demoDetails(): InvoiceDetail[] {
       total_cents: t.total,
       sign_token: `demo${n}`,
       stripe_payment_link_url: inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
-      platform_fee_cents: inv.id === "1" ? Math.floor((t.total * 100 + 5_000) / 10_000) : null,
+      ...(inv.id === "1"
+        ? (() => {
+            const fee = platformFee(t.total, { bps: 100, fixedCents: 30, taxNumbers: { tps: "987654321RT0001", tvq: "9876543210TQ0001" } });
+            return { platform_fee_cents: fee.base, platform_fee_tps_cents: fee.tps, platform_fee_tvq_cents: fee.tvq };
+          })()
+        : { platform_fee_cents: null, platform_fee_tps_cents: null, platform_fee_tvq_cents: null }),
       signature_path: null,
       signed_via: inv.signed_at ? "on_site" : null,
       signed_offline: false,

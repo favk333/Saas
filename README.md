@@ -93,7 +93,8 @@ supabase/
   migrations/0006_quebec_identifiers.sql ✓ NEQ (remplace le SIRET), licence RBQ
   migrations/0007_soumissions.sql        ✓ numérotation S-AAAA-0001 (au lieu de D-…)
   migrations/0008_offline_signature.sql  ✓ signed_offline (signature faite sans réseau)
-  migrations/0009_platform_fee.sql       ✓ platform_fee_cents (commission demandée à Stripe)
+  migrations/0009_platform_fee.sql       ✓ platform_fee_cents (commission avant taxes)
+  migrations/0010_platform_fee_taxes.sql ✓ TPS / TVQ sur la commission
 ```
 
 ## Base de données
@@ -143,6 +144,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - Passée à Stripe en `application_fee_amount` à la création du lien de paiement : Stripe la prélève sur le paiement et la verse au compte de la plateforme, le reste va à l'artisan. Les frais Stripe restent à la charge du compte de l'artisan (compte Standard).
 - Enregistrée sur la facture (`platform_fee_cents`), affichée à l'artisan sur la facture, et le taux dans Réglages.
 - Fixée au moment où le lien est créé : changer le taux n'affecte pas les liens déjà envoyés.
+- **TPS et TVQ sur la commission** : si `PLATFORM_TPS_NUMBER` et `PLATFORM_TVQ_NUMBER` sont définis (plateforme inscrite), TPS 5 % et TVQ 9,975 % sont calculées sur la commission, avec les mêmes arrondis que les soumissions. Stripe ne prend qu'un montant : `application_fee_amount` = commission + TPS + TVQ, plafonné au paiement. La facture enregistre le détail (`platform_fee_cents`, `platform_fee_tps_cents`, `platform_fee_tvq_cents`) et l'affiche à l'artisan avec les numéros de la plateforme, pour ses crédits de taxe (CTI / RTI). Un seul des deux numéros, ou un numéro mal formé : création du lien refusée et journalisée.
+- Hypothèse : les artisans sont au Québec (TVQ applicable). Un artisan dans une autre province relèverait d'autres règles (TVH, TPS seule).
 
 ## PDF
 

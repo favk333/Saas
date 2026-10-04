@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge";
 import { InvoiceActions } from "@/components/invoice/invoice-actions";
 import { QuoteSummary } from "@/components/quote/quote-summary";
 import { getInvoice } from "@/lib/data";
+import { feeInfoSafe, spacedTaxNumber } from "@/lib/fees";
 import { formatCents } from "@/lib/format";
 import { displayStatus } from "@/lib/types";
 
@@ -41,13 +42,37 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         {isInvoice && <div className="flex justify-between"><dt>Soumission</dt><dd className="tabular-nums">{invoice.quote_number}</dd></div>}
         {invoice.signed_at && <div className="flex justify-between"><dt>Signée{invoice.signed_offline ? " (hors ligne)" : ""}</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
         {invoice.due_at && !invoice.paid_at && <div className="flex justify-between"><dt>Échéance</dt><dd>{dateTime(invoice.due_at)}</dd></div>}
-        {invoice.stripe_payment_link_url && invoice.platform_fee_cents ? (
-          <div className="flex justify-between"><dt>Commission (au paiement)</dt><dd className="tabular-nums">{formatCents(invoice.platform_fee_cents)}</dd></div>
-        ) : null}
+        {invoice.stripe_payment_link_url && invoice.platform_fee_cents ? <FeeRows invoice={invoice} /> : null}
         {invoice.paid_at && <div className="flex justify-between text-paid"><dt>Payée</dt><dd>{dateTime(invoice.paid_at)}</dd></div>}
       </dl>
 
       <InvoiceActions id={invoice.id} status={status} paymentUrl={invoice.stripe_payment_link_url} />
     </div>
+  );
+}
+
+/** Commission de la plateforme prélevée au paiement, avec TPS / TVQ (pour les crédits de taxe de l'artisan). */
+function FeeRows({ invoice }: { invoice: { platform_fee_cents: number | null; platform_fee_tps_cents: number | null; platform_fee_tvq_cents: number | null } }) {
+  const base = invoice.platform_fee_cents ?? 0;
+  const tps = invoice.platform_fee_tps_cents ?? 0;
+  const tvq = invoice.platform_fee_tvq_cents ?? 0;
+  const row = (label: string, cents: number) => (
+    <div className="flex justify-between"><dt>{label}</dt><dd className="tabular-nums">{formatCents(cents)}</dd></div>
+  );
+  if (!tps && !tvq) return row("Commission (au paiement)", base);
+
+  const numbers = feeInfoSafe().taxNumbers;
+  return (
+    <>
+      {row("Commission (au paiement)", base)}
+      {row("TPS sur la commission", tps)}
+      {row("TVQ sur la commission", tvq)}
+      {row("Total prélevé", base + tps + tvq)}
+      {numbers && (
+        <p className="pt-1 text-[12px]">
+          N° de TPS {spacedTaxNumber(numbers.tps)} · N° de TVQ {spacedTaxNumber(numbers.tvq)}
+        </p>
+      )}
+    </>
   );
 }

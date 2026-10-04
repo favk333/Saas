@@ -20,13 +20,13 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 ## 1. Supabase : base de données
 
 - [ ] Créer le projet dans la région **Canada (Central, `ca-central-1`)**. Les données des clients (téléphones, signatures, IP) restent ainsi au Canada (Loi 25).
-- [ ] Appliquer les 9 migrations **dans l'ordre**, avec l'une des deux méthodes :
+- [ ] Appliquer les 10 migrations **dans l'ordre**, avec l'une des deux méthodes :
   - CLI :
     ```bash
     supabase link --project-ref <ref>
     supabase db push
     ```
-  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, `0006_quebec_identifiers.sql`, `0007_soumissions.sql`, `0008_offline_signature.sql`, puis `0009_platform_fee.sql`.
+  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, `0006_quebec_identifiers.sql`, `0007_soumissions.sql`, `0008_offline_signature.sql`, `0009_platform_fee.sql`, puis `0010_platform_fee_taxes.sql`.
 - [ ] Vérifier :
   - **Table Editor** : les tables `profiles`, `clients`, `invoices` et `line_items` existent, chacune avec l'icône RLS activée.
   - **Storage** : le bucket `signatures` existe et est **privé**.
@@ -72,6 +72,8 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
   | `STRIPE_CONNECT_WEBHOOK_SECRET` | section 4 |
   | `PLATFORM_FEE_BPS` | section 4, commission (vide = aucune) |
   | `PLATFORM_FEE_FIXED_CENTS` | section 4, commission (facultatif) |
+  | `PLATFORM_TPS_NUMBER` | section 4, si la plateforme est inscrite |
+  | `PLATFORM_TVQ_NUMBER` | section 4, si la plateforme est inscrite |
   | `TWILIO_ACCOUNT_SID` | section 5 |
   | `TWILIO_AUTH_TOKEN` | section 5 |
   | `TWILIO_FROM_NUMBER` | section 5 |
@@ -109,7 +111,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 - [ ] Redéployer sur Vercel après avoir ajouté les secrets.
 - [ ] **Commission de la plateforme** : définir `PLATFORM_FEE_BPS` (ex. `100` = 1 %) et, si voulu, `PLATFORM_FEE_FIXED_CENTS` (ex. `30` = 0,30 $) dans Vercel, puis redéployer. Sans ces variables, aucune commission n'est prélevée.
   - Vérifier dans Stripe (**Connect → Collected fees**) que la commission arrive après un paiement de test.
-  - Fiscalité : la commission est un service rendu à l'artisan. Si la plateforme est inscrite à la TPS / TVQ, ces taxes s'appliquent à la commission : à valider avec un comptable.
+  - **TPS / TVQ sur la commission** : si la plateforme est inscrite, définir `PLATFORM_TPS_NUMBER` et `PLATFORM_TVQ_NUMBER`. Les taxes sont alors ajoutées à la commission et le détail est affiché à l'artisan pour ses crédits de taxe. Faire valider par un comptable (inscription, lieu de fourniture, document à remettre aux artisans).
 
 ---
 

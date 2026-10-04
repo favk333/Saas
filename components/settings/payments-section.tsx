@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { ArrowUpRight, CircleCheck } from "lucide-react";
 import { startStripeOnboarding, type SettingsState } from "@/app/(app)/reglages/actions";
+import { spacedTaxNumber, type FeeConfig } from "@/lib/fees";
 import { withNetworkGuard } from "@/lib/network";
 import { Section } from "./profile-form";
 
@@ -15,18 +16,20 @@ export function PaymentsSection({
   accountId,
   enabled,
   failed,
-  feeLabel,
+  fee: feeInfo,
 }: {
   accountId: string | null;
   enabled: boolean;
   failed: boolean;
-  feeLabel: string | null; // ex. "1 % + 0,30 $"
+  fee: { label: string | null; taxNumbers: FeeConfig["taxNumbers"] }; // ex. "1 % + 0,30 $ (+ TPS et TVQ)"
 }) {
   const [state, action, pending] = useActionState<SettingsState>(onboard, { error: null });
   const error = state.error ?? (failed ? "Stripe indisponible. Réessayez dans un instant." : null);
-  const fee = feeLabel && (
+  const fee = feeInfo.label && (
     <p className="text-[13px] text-muted">
-      Commission de la plateforme : {feeLabel} par paiement en ligne, prélevée automatiquement, en plus des frais Stripe.
+      Commission de la plateforme : {feeInfo.label} par paiement en ligne, prélevée automatiquement, en plus des frais Stripe.
+      {feeInfo.taxNumbers &&
+        ` N° de TPS ${spacedTaxNumber(feeInfo.taxNumbers.tps)} · N° de TVQ ${spacedTaxNumber(feeInfo.taxNumbers.tvq)}.`}
     </p>
   );
 

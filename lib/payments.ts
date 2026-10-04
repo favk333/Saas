@@ -31,19 +31,25 @@ export async function ensurePaymentLink(supabase: SupabaseClient, invoiceId: str
   // L'argent doit arriver sur le compte de l'artisan, jamais sur celui de la plateforme.
   if (!profile?.stripe_account_id || !profile.stripe_charges_enabled) throw new PaymentsNotEnabledError();
 
-  const fee = platformFee(inv.total_cents, feeConfig());
+  const fee = platformFee(inv.total_cents, feeConfig()); // commission + TPS / TVQ si la plateforme est inscrite
   const link = await createPaymentLink({
     invoiceId: inv.id,
     invoiceNumber: inv.invoice_number,
     totalCents: inv.total_cents,
     currency: inv.currency,
     stripeAccountId: profile.stripe_account_id,
-    applicationFeeCents: fee,
+    applicationFeeCents: fee.total,
   });
 
   await supabase
     .from("invoices")
-    .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url, platform_fee_cents: fee })
+    .update({
+      stripe_payment_link_id: link.id,
+      stripe_payment_link_url: link.url,
+      platform_fee_cents: fee.base,
+      platform_fee_tps_cents: fee.tps,
+      platform_fee_tvq_cents: fee.tvq,
+    })
     .eq("id", inv.id);
   return link.url;
 }
