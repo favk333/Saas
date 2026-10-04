@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { onboardingUrl } from "@/lib/connect";
+import { normalizeNeq, normalizeRbq } from "@/lib/identifiers";
 import { isTaxRegime, normalizePhone } from "@/lib/quote";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -16,7 +17,8 @@ export async function saveProfile(_prev: SettingsState, formData: FormData): Pro
   const companyName = String(formData.get("companyName") ?? "").trim();
   const rawPhone = String(formData.get("phone") ?? "").trim();
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
-  const siret = String(formData.get("siret") ?? "").replace(/\s/g, "") || null;
+  const neq = normalizeNeq(String(formData.get("neq") ?? ""));
+  const rbqLicence = normalizeRbq(String(formData.get("rbqLicence") ?? ""));
   const address = String(formData.get("address") ?? "").trim() || null;
   const tpsNumber = String(formData.get("tpsNumber") ?? "").replace(/[\s-]/g, "").toUpperCase() || null;
   const tvqNumber = String(formData.get("tvqNumber") ?? "").replace(/[\s-]/g, "").toUpperCase() || null;
@@ -26,7 +28,8 @@ export async function saveProfile(_prev: SettingsState, formData: FormData): Pro
   if (!companyName) return { error: "Nom de l'entreprise manquant." };
   if (companyName.length > 80) return { error: "Nom trop long (80 caractères max)." };
   if (rawPhone && !phone) return { error: "Numéro de téléphone invalide." };
-  if (siret && !/^\d{14}$/.test(siret)) return { error: "Le SIRET compte 14 chiffres." };
+  if (neq === false) return { error: "Le NEQ compte 10 chiffres." };
+  if (rbqLicence === false) return { error: "La licence RBQ compte 10 chiffres (ex. 1234-5678-90)." };
   if (tpsNumber && !/^\d{9}RT\d{4}$/.test(tpsNumber)) return { error: "N° de TPS invalide (ex. 123456789 RT0001)." };
   if (tvqNumber && !/^\d{10}TQ\d{4}$/.test(tvqNumber)) return { error: "N° de TVQ invalide (ex. 1234567890 TQ0001)." };
   if (insurance && insurance.length > 200) return { error: "Assurance : 200 caractères max." };
@@ -42,7 +45,7 @@ export async function saveProfile(_prev: SettingsState, formData: FormData): Pro
 
   const { error } = await supabase
     .from("profiles")
-    .update({ company_name: companyName, phone, siret, address, tps_number: tpsNumber, tvq_number: tvqNumber, insurance, default_tax_regime: taxRegime })
+    .update({ company_name: companyName, phone, neq, rbq_licence: rbqLicence, address, tps_number: tpsNumber, tvq_number: tvqNumber, insurance, default_tax_regime: taxRegime })
     .eq("id", user.id);
   if (error) return { error: "Enregistrement impossible. Réessayez." };
 

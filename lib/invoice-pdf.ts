@@ -7,7 +7,8 @@ const DEMO_SELLER: Seller = {
   company_name: "Tremblay Électrique",
   address: "1200 rue Sainte-Catherine O., Montréal (Québec) H3B 1K9",
   phone: "+15145551234",
-  siret: null,
+  neq: "1171234567",
+  rbq_licence: "5678123401",
   tps_number: "123456789RT0001",
   tvq_number: "1234567890TQ0001",
   insurance: "Responsabilité civile Intact, police n° 123456",
@@ -24,7 +25,7 @@ export async function invoicePdfResponse(invoice: InvoiceDetail, supabase: Supab
   if (supabase) {
     const { data } = await supabase
       .from("profiles")
-      .select("company_name, address, phone, siret, tps_number, tvq_number, insurance")
+      .select("company_name, address, phone, neq, rbq_licence, tps_number, tvq_number, insurance")
       .eq("id", invoice.user_id)
       .single();
     if (!data) return new Response("Profil introuvable", { status: 404 });

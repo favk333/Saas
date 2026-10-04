@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 import { saveProfile, type SettingsState } from "@/app/(app)/reglages/actions";
 import { TaxRegimePicker } from "@/components/ui/tax-regime-picker";
+import { formatRbq } from "@/lib/identifiers";
 import type { Profile } from "@/lib/data";
 import { withNetworkGuard } from "@/lib/network";
 
@@ -28,7 +29,8 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
   const [values, setValues] = useState({
     companyName: profile.company_name,
     phone: displayPhone(profile.phone),
-    siret: profile.siret ?? "",
+    neq: profile.neq ?? "",
+    rbqLicence: profile.rbq_licence ? formatRbq(profile.rbq_licence) : "",
     address: profile.address ?? "",
     tpsNumber: spaced(profile.tps_number),
     tvqNumber: spaced(profile.tvq_number),
@@ -63,8 +65,8 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
           <input {...field("phone")} type="tel" inputMode="tel" className={input} autoComplete="tel" />
         </div>
         <div>
-          <label htmlFor="siret" className={label}>SIRET</label>
-          <input {...field("siret")} inputMode="numeric" className={`${input} tabular-nums`} autoComplete="off" />
+          <label htmlFor="neq" className={label}>NEQ</label>
+          <input {...field("neq")} inputMode="numeric" className={`${input} tabular-nums`} autoComplete="off" placeholder="1234567890" />
         </div>
         <div>
           <label htmlFor="address" className={label}>Adresse</label>
@@ -80,6 +82,10 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
         <div>
           <label htmlFor="tvqNumber" className={label}>N° de TVQ</label>
           <input {...field("tvqNumber")} className={`${input} uppercase tabular-nums`} autoComplete="off" placeholder="1234567890 TQ0001" />
+        </div>
+        <div>
+          <label htmlFor="rbqLicence" className={label}>Licence RBQ</label>
+          <input {...field("rbqLicence")} inputMode="numeric" className={`${input} tabular-nums`} autoComplete="off" placeholder="1234-5678-90" />
         </div>
         <div>
           <label htmlFor="insurance" className={label}>Assurance</label>

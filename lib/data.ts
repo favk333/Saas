@@ -77,7 +77,8 @@ export type Profile = {
   email: string | null;
   company_name: string;
   phone: string | null;
-  siret: string | null;
+  neq: string | null;
+  rbq_licence: string | null;
   address: string | null;
   tps_number: string | null;
   tvq_number: string | null;
@@ -91,7 +92,7 @@ export async function getProfile(): Promise<Profile | null> {
   if (!isSupabaseConfigured) {
     return {
       email: "info@tremblay-electrique.ca", company_name: "Tremblay Électrique", phone: "+15145551234",
-      siret: null, address: "1200 rue Sainte-Catherine O., Montréal (Québec) H3B 1K9", default_tax_regime: "qc",
+      neq: "1171234567", rbq_licence: "5678123401", address: "1200 rue Sainte-Catherine O., Montréal (Québec) H3B 1K9", default_tax_regime: "qc",
       tps_number: "123456789RT0001", tvq_number: "1234567890TQ0001", insurance: "Responsabilité civile Intact, police n° 123456",
       stripe_account_id: null, stripe_charges_enabled: false,
     };
@@ -101,7 +102,7 @@ export async function getProfile(): Promise<Profile | null> {
   if (!user) return null;
   const { data } = await supabase
     .from("profiles")
-    .select("company_name, phone, siret, address, tps_number, tvq_number, insurance, default_tax_regime, stripe_account_id, stripe_charges_enabled")
+    .select("company_name, phone, neq, rbq_licence, address, tps_number, tvq_number, insurance, default_tax_regime, stripe_account_id, stripe_charges_enabled")
     .eq("id", user.id)
     .maybeSingle();
   return data ? { email: user.email, ...data } : null;

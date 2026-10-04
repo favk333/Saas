@@ -1,5 +1,6 @@
 import "server-only";
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from "pdf-lib";
+import { formatRbq } from "./identifiers";
 import { TPS_LABEL, TVQ_LABEL } from "./quote";
 import type { InvoiceDetail } from "./types";
 
@@ -7,7 +8,8 @@ export type Seller = {
   company_name: string;
   address: string | null;
   phone: string | null;
-  siret: string | null;
+  neq: string | null;
+  rbq_licence: string | null;
   tps_number: string | null;
   tvq_number: string | null;
   insurance: string | null;
@@ -97,7 +99,8 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   const sellerLines = [
     seller.address,
     seller.phone && `Tél. ${phone(seller.phone)}`,
-    seller.siret && `SIRET ${seller.siret}`,
+    seller.neq && `NEQ ${seller.neq}`,
+    seller.rbq_licence && `Licence RBQ ${formatRbq(seller.rbq_licence)}`,
     seller.tps_number && `TPS ${regNumber(seller.tps_number)}`,
     seller.tvq_number && `TVQ ${regNumber(seller.tvq_number)}`,
   ].filter(Boolean) as string[];
@@ -183,7 +186,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
     if (invoice.paid_at) terms.push(`Facture acquittée le ${date(invoice.paid_at)}.`);
     else if (invoice.due_at) terms.push(`Paiement à réception, au plus tard le ${date(invoice.due_at)}.`);
   } else {
-    terms.push("Devis gratuit, valable 30 jours. Les travaux débutent après acceptation signée.");
+    terms.push("Devis valable 30 jours. Les travaux débutent après acceptation signée.");
   }
   if (seller.insurance) terms.push(`Assurance : ${seller.insurance}.`);
 
@@ -202,7 +205,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   if (invoice.signed_at) {
     ensure(110);
     y -= 14;
-    text("BON POUR ACCORD", M, y, { size: 8, color: MUTED });
+    text("ACCEPTATION DU CLIENT", M, y, { size: 8, color: MUTED });
     y -= 13;
     const how = invoice.signed_via === "remote" ? "en ligne" : "sur place";
     text(`Signé ${how} par ${invoice.client.name} le ${date(invoice.signed_at)}`, M, y);
@@ -218,7 +221,8 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     page = p as PDFPage;
-    text(`${seller.company_name}${seller.siret ? ` · SIRET ${seller.siret}` : ""}`, M, M - 20, { size: 7.5, color: MUTED });
+    const ids = [seller.neq && `NEQ ${seller.neq}`, seller.rbq_licence && `RBQ ${formatRbq(seller.rbq_licence)}`].filter(Boolean);
+    text([seller.company_name, ...ids].join(" · "), M, M - 20, { size: 7.5, color: MUTED });
     text(`${title} · ${i + 1}/${pages.length}`, W - M, M - 20, { size: 7.5, color: MUTED, align: "right" });
   });
 

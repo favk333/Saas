@@ -84,6 +84,7 @@ supabase/
   migrations/0003_profile_stripe.sql ✓ adresse, statut Stripe, colonnes du profil verrouillées
   migrations/0004_legal_mentions.sql ✓ assurance (et n° TVA, remplacé en 0005)
   migrations/0005_quebec_taxes.sql   ✓ CAD, TPS 5 % + TVQ 9,975 %, n° d'inscription TPS / TVQ
+  migrations/0006_quebec_identifiers.sql ✓ NEQ (remplace le SIRET), licence RBQ
 ```
 
 ## Base de données
@@ -130,7 +131,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - `/devis/[id]/pdf` pour l'artisan connecté et `/s/[token]/pdf` pour le client. Les brouillons ne sont jamais exposés par le lien public.
 - Le PDF est un **devis** avant signature (validité 30 jours) et une **facture** après.
 - Mentions imprimées :
-  - vendeur : nom, adresse, téléphone, n° de TPS et de TVQ ;
+  - vendeur : nom, adresse, téléphone, NEQ, licence RBQ, n° de TPS et de TVQ ;
   - numéros et dates (émission, devis d'origine, échéance) ;
   - sous-total, TPS (5 %), TVQ (9,975 %) et total, ou « Taxes non applicables » pour un petit fournisseur non inscrit ;
   - échéance ;
