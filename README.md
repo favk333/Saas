@@ -46,6 +46,7 @@ app/
   api/
     cron/relances/route.ts       ✓ relances J+3 / J+7 (Vercel Cron)
     webhooks/stripe/route.ts     ✓ paiement reçu → "paid" ; account.updated → statut Connect
+    offline-sync/route.ts        ✓ envoi différé des soumissions faites hors ligne (rejouable)
     stripe/connect/route.ts      ✓ retour / relance de l'onboarding Stripe
 components/
   dashboard/                     ✓ invoice-row, status-badge, remind-button
@@ -66,6 +67,8 @@ lib/
   twilio.ts                      ✓ envoi SMS (API REST)
   reminders.ts                   ✓ calendrier J+3 / J+7 + textes des SMS
   network.ts                     ✓ garde réseau des formulaires (pas d'écran perdu)
+  outbox.ts                      ✓ file d'attente hors ligne (IndexedDB) côté page
+  quote-server.ts                ✓ création de soumission et envoi du SMS (en ligne et différé)
   supabase/admin.ts              ✓ client service role (pages publiques, cron)
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
@@ -86,6 +89,7 @@ supabase/
   migrations/0005_quebec_taxes.sql   ✓ CAD, TPS 5 % + TVQ 9,975 %, n° d'inscription TPS / TVQ
   migrations/0006_quebec_identifiers.sql ✓ NEQ (remplace le SIRET), licence RBQ
   migrations/0007_soumissions.sql        ✓ numérotation S-AAAA-0001 (au lieu de D-…)
+  migrations/0008_offline_signature.sql  ✓ signed_offline (signature faite sans réseau)
 ```
 
 ## Base de données
@@ -151,4 +155,16 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - **Formulaires** : hors ligne ou coupure en cours d'envoi, un message s'affiche et la saisie reste à l'écran (`lib/network.ts`).
 - **Brouillon de soumission** : enregistré sur le téléphone à chaque frappe, restauré à la réouverture, effacé après un envoi réussi.
 - **Nouvelle version** : changer `VERSION` dans `sw.js` vide l'ancien cache des fichiers statiques.
-- Pas de file d'attente hors ligne : créer, signer ou relancer demande du réseau.
+
+## Signature hors ligne et envoi différé
+
+- **Sans réseau** (ou réseau trop faible pour envoyer), « Faire signer sur place » affiche le récapitulatif calculé sur le téléphone puis le pad de signature. « Envoyer par SMS » met la soumission en attente.
+- La soumission et sa signature vont dans une **file IndexedDB** (`lib/outbox.ts`), visible sur l'accueil (« En attente d'envoi »).
+- **Le service worker envoie la file** (`public/sw.js`, `POST /api/offline-sync`) :
+  - à l'ouverture de l'app, au retour du réseau, et au retour dans l'app ;
+  - en arrière-plan, app fermée, sur Android / Chrome (Background Sync). iOS ne le permet pas : l'envoi se fait à la prochaine ouverture.
+- **Sans doublon** : l'identifiant de la soumission est créé sur le téléphone ; un renvoi retrouve la soumission existante. L'envoi du SMS est réservé en base (`draft → sent`) avant l'appel à Twilio, donc un seul SMS même en cas d'envois simultanés.
+- **Preuve** : `signed_at` garde l'heure de la signature sur le téléphone (bornée : pas dans le futur, 30 jours max), `signed_offline = true`, et le PDF indique « Signée sur place (hors ligne) ».
+- **Réponses de `/api/offline-sync`** : 2xx envoyé ; 401 / 502 / 503 nouvel essai plus tard ; 409 (autre compte) / 422 (données invalides) échec affiché sur l'accueil, avec « Supprimer ».
+- Chaque élément est rattaché au compte qui l'a créé : il ne part jamais sous un autre compte, et la déconnexion prévient s'il en reste.
+- Après connexion, `/` et `/soumissions/nouveau` sont mis en cache **avec leurs fichiers JS / CSS**, pour qu'une soumission puisse être faite hors ligne même si la page n'a jamais été ouverte.

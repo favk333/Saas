@@ -20,13 +20,13 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 ## 1. Supabase : base de données
 
 - [ ] Créer le projet dans la région **Canada (Central, `ca-central-1`)**. Les données des clients (téléphones, signatures, IP) restent ainsi au Canada (Loi 25).
-- [ ] Appliquer les 7 migrations **dans l'ordre**, avec l'une des deux méthodes :
+- [ ] Appliquer les 8 migrations **dans l'ordre**, avec l'une des deux méthodes :
   - CLI :
     ```bash
     supabase link --project-ref <ref>
     supabase db push
     ```
-  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, `0006_quebec_identifiers.sql`, puis `0007_soumissions.sql`.
+  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, `0006_quebec_identifiers.sql`, `0007_soumissions.sql`, puis `0008_offline_signature.sql`.
 - [ ] Vérifier :
   - **Table Editor** : les tables `profiles`, `clients`, `invoices` et `line_items` existent, chacune avec l'icône RLS activée.
   - **Storage** : le bucket `signatures` existe et est **privé**.
@@ -153,6 +153,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
   - iPhone / Safari : Partager → « Sur l'écran d'accueil ».
   - Vérifier que l'icône s'affiche et que l'app s'ouvre en plein écran.
 - [ ] **Hors ligne** : ouvrir l'accueil et une facture, passer en mode avion, rouvrir l'app. Les données s'affichent avec le bandeau « Hors ligne ».
+- [ ] **Signature hors ligne** : ouvrir l'app une fois en ligne, passer en mode avion, « Nouvelle soumission » → « Faire signer sur place » → signer. L'accueil affiche « En attente d'envoi ». Désactiver le mode avion et rouvrir l'app : la soumission apparaît comme facture « Signée (hors ligne) ».
 - [ ] **Déconnexion** : Réglages → « Se déconnecter ». On revient sur `/login`.
 
 ---

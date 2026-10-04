@@ -9,10 +9,7 @@ type Point = { x: number; y: number };
 
 const INK = "#111827";
 
-/**
- * Pad de signature au doigt (Canvas 2D + Pointer Events, sans dépendance).
- * Les tracés sont gardés en mémoire pour être redessinés si l'écran pivote.
- */
+/** Signature envoyée à une action serveur (en ligne). */
 export function SignatureForm({
   action,
   fields,
@@ -23,6 +20,31 @@ export function SignatureForm({
   // Coupure réseau : message d'erreur, la signature reste dessinée pour réessayer.
   const guarded = useMemo(() => withNetworkGuard(action), [action]);
   const [state, dispatch, pending] = useActionState(guarded, { error: null });
+
+  const onValidate = (png: string) => {
+    const fd = new FormData();
+    Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
+    fd.set("signature", png);
+    startTransition(() => dispatch(fd));
+  };
+
+  return <SignaturePad onValidate={onValidate} pending={pending} error={state.error} />;
+}
+
+/**
+ * Pad de signature au doigt (Canvas 2D + Pointer Events, sans dépendance).
+ * Les tracés sont gardés en mémoire pour être redessinés si l'écran pivote.
+ * `onValidate` reçoit la signature en PNG (data URL), recadrée.
+ */
+export function SignaturePad({
+  onValidate,
+  pending = false,
+  error = null,
+}: {
+  onValidate: (png: string) => void;
+  pending?: boolean;
+  error?: string | null;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokes = useRef<Point[][]>([]);
   const drawing = useRef(false);
@@ -84,12 +106,7 @@ export function SignatureForm({
     setEmpty(true);
   };
 
-  const submit = () => {
-    const fd = new FormData();
-    Object.entries(fields).forEach(([k, v]) => fd.set(k, v));
-    fd.set("signature", exportPng(strokes.current));
-    startTransition(() => dispatch(fd));
-  };
+  const submit = () => onValidate(exportPng(strokes.current));
 
   return (
     <>
@@ -114,7 +131,7 @@ export function SignatureForm({
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-lg space-y-2">
-          {state.error && <p role="alert" className="text-[14px] text-late">{state.error}</p>}
+          {error && <p role="alert" className="text-[14px] text-late">{error}</p>}
           <div className="flex gap-2">
             <button type="button" onClick={clear} disabled={empty || pending}
               className="flex h-13 flex-1 items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-40">

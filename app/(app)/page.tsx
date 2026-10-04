@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Plus, Settings } from "lucide-react";
 import { InvoiceRow } from "@/components/dashboard/invoice-row";
-import { getDashboard } from "@/lib/data";
+import { OutboxList } from "@/components/dashboard/outbox-list";
+import { getCurrentUserId, getDashboard } from "@/lib/data";
 import { formatCents } from "@/lib/format";
 
 type Tab = "pending" | "paid";
@@ -10,7 +11,7 @@ type Tab = "pending" | "paid";
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab: tabParam } = await searchParams;
   const tab: Tab = tabParam === "paid" ? "paid" : "pending";
-  const { companyName, paymentsEnabled, pending, paid } = await getDashboard();
+  const [{ companyName, paymentsEnabled, pending, paid }, userId] = await Promise.all([getDashboard(), getCurrentUserId()]);
   if (!companyName) redirect("/reglages?bienvenue=1");
   const list = tab === "paid" ? paid : pending;
   const now = new Date();
@@ -47,9 +48,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </header>
 
       <main className="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))]">
+        {userId && tab === "pending" && <OutboxList userId={userId} />}
         {list.length === 0 ? (
           <p className="px-4 py-12 text-center text-[15px] text-muted">
-            {tab === "paid" ? "Aucun paiement reçu." : "Rien en attente."}
+            {tab === "paid" ? "Aucun paiement reçu." : "Rien en attente de paiement."}
           </p>
         ) : (
           <ul className="divide-y divide-line">
