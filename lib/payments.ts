@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { feeConfig, platformFee } from "./fees";
 import { createPaymentLink } from "./stripe";
 
 export class PaymentsNotEnabledError extends Error {
@@ -30,17 +31,19 @@ export async function ensurePaymentLink(supabase: SupabaseClient, invoiceId: str
   // L'argent doit arriver sur le compte de l'artisan, jamais sur celui de la plateforme.
   if (!profile?.stripe_account_id || !profile.stripe_charges_enabled) throw new PaymentsNotEnabledError();
 
+  const fee = platformFee(inv.total_cents, feeConfig());
   const link = await createPaymentLink({
     invoiceId: inv.id,
     invoiceNumber: inv.invoice_number,
     totalCents: inv.total_cents,
     currency: inv.currency,
     stripeAccountId: profile.stripe_account_id,
+    applicationFeeCents: fee,
   });
 
   await supabase
     .from("invoices")
-    .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url })
+    .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url, platform_fee_cents: fee })
     .eq("id", inv.id);
   return link.url;
 }

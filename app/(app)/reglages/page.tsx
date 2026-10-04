@@ -5,6 +5,7 @@ import { LogoutButton } from "@/components/settings/logout-button";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
 import { getCurrentUserId, getProfile } from "@/lib/data";
+import { feeLabelSafe } from "@/lib/fees";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string }> }) {
   const { bienvenue, stripe } = await searchParams;
@@ -37,7 +38,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
       {!welcome && (
         <>
-          <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} />
+          <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} feeLabel={feeLabelSafe()} />
           <Section title="Compte">
             {profile.email && <p className="text-[15px]">{profile.email}</p>}
             <LogoutButton userId={userId} />
