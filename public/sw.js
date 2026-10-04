@@ -1,7 +1,7 @@
 // Service worker : ouverture instantanée et lecture hors ligne.
 // Pas de librairie : la logique tient en trois règles (voir fetch ci-dessous).
 
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `static-${VERSION}`; // fichiers versionnés de Next + icônes
 const PAGES = "pages"; // dernières pages vues (données de l'artisan, effacé à la déconnexion)
 const OFFLINE = "/offline.html";
@@ -44,8 +44,10 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Jamais en cache : API, auth, pages client (/s/…), PDF, connexion.
-  if (/^\/(api|auth|s|login)(\/|$)/.test(url.pathname) || url.pathname.endsWith("/pdf")) return;
+  // Jamais en cache : API, auth, connexion, PDF.
+  // Les pages client /s/… le sont : sur le téléphone du client, elles ne contiennent que sa soumission,
+  // et il doit pouvoir la rouvrir et la signer sans réseau.
+  if (/^\/(api|auth|login)(\/|$)/.test(url.pathname) || url.pathname.endsWith("/pdf")) return;
 
   // 1. Fichiers versionnés (hash dans le nom) : cache d'abord, immuables.
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
@@ -159,11 +161,13 @@ async function doFlush() {
     if (item.status === "failed") continue;
     let res;
     try {
-      res = await fetch("/api/offline-sync", {
+      // Soumission de l'artisan, ou signature du client sur le lien /s/[token].
+      const remote = item.kind === "remote";
+      res = await fetch(remote ? "/api/remote-sign" : "/api/offline-sync", {
         method: "POST",
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(item),
+        body: JSON.stringify(remote ? { token: item.token, signature: item.signature, signedAt: item.signedAt } : item),
       });
     } catch {
       retryLater = true; // toujours pas de réseau

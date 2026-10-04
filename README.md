@@ -47,6 +47,7 @@ app/
     cron/relances/route.ts       ✓ relances J+3 / J+7 (Vercel Cron)
     webhooks/stripe/route.ts     ✓ paiement reçu → "paid" ; account.updated → statut Connect
     offline-sync/route.ts        ✓ envoi différé des soumissions faites hors ligne (rejouable)
+    remote-sign/route.ts         ✓ envoi différé des signatures du client faites hors ligne (public, par jeton)
     stripe/connect/route.ts      ✓ retour / relance de l'onboarding Stripe
 components/
   dashboard/                     ✓ invoice-row, status-badge, remind-button
@@ -69,6 +70,7 @@ lib/
   network.ts                     ✓ garde réseau des formulaires (pas d'écran perdu)
   outbox.ts                      ✓ file d'attente hors ligne (IndexedDB) côté page
   quote-server.ts                ✓ création de soumission et envoi du SMS (en ligne et différé)
+  remote-sign.ts                 ✓ signature par le client via /s/[token] (en ligne et différée)
   supabase/admin.ts              ✓ client service role (pages publiques, cron)
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
@@ -150,7 +152,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - **Service worker** (`public/sw.js`, actif uniquement en production) :
   - fichiers versionnés de Next (`/_next/static`) : servis depuis le cache ;
   - pages : réseau d'abord avec un délai de **3 s**, puis la dernière version vue, puis `offline.html` ;
-  - jamais en cache : `/api`, `/auth`, `/login`, `/s/…`, les PDF, les envois de formulaires.
+  - jamais en cache : `/api`, `/auth`, `/login`, les PDF, les envois de formulaires. Les pages client `/s/…` sont en cache sur le téléphone du client (elles ne contiennent que sa soumission).
 - **Déconnexion** : les pages en cache, qui contiennent les données de l'artisan, sont effacées.
 - **Formulaires** : hors ligne ou coupure en cours d'envoi, un message s'affiche et la saisie reste à l'écran (`lib/network.ts`).
 - **Brouillon de soumission** : enregistré sur le téléphone à chaque frappe, restauré à la réouverture, effacé après un envoi réussi.
@@ -168,3 +170,11 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - **Réponses de `/api/offline-sync`** : 2xx envoyé ; 401 / 502 / 503 nouvel essai plus tard ; 409 (autre compte) / 422 (données invalides) échec affiché sur l'accueil, avec « Supprimer ».
 - Chaque élément est rattaché au compte qui l'a créé : il ne part jamais sous un autre compte, et la déconnexion prévient s'il en reste.
 - Après connexion, `/` et `/soumissions/nouveau` sont mis en cache **avec leurs fichiers JS / CSS**, pour qu'une soumission puisse être faite hors ligne même si la page n'a jamais été ouverte.
+
+### Signature à distance hors ligne (téléphone du client)
+
+- Dès que le client a ouvert le lien `/s/[token]` **une fois avec du réseau**, la page (et ses JS / CSS) est gardée sur son téléphone.
+- Sans réseau, sa signature va dans la même file IndexedDB (`kind: "remote"`, une par lien) et le service worker l'envoie à `POST /api/remote-sign` au retour du réseau. Si le client rouvre le lien entre-temps, il voit « Signature enregistrée sur votre téléphone ».
+- Rejouable : une soumission déjà signée renvoie un succès sans rien écraser ; lien inconnu, soumission annulée ou signature illisible → 422.
+- `signed_via = remote`, `signed_offline = true`, `signed_at` = heure de la signature sur le téléphone du client (bornée).
+- Limite : un lien jamais ouvert avec du réseau ne peut pas s'afficher hors ligne (page « Pas de réseau »). Sur iPhone, l'envoi se fait quand le client rouvre le lien avec du réseau ; sur Android, en arrière-plan.

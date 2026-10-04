@@ -10,7 +10,9 @@ import type { QuoteFields } from "./quote";
 const OUTBOX_DB = "chantier";
 const OUTBOX_STORE = "outbox";
 
+/** Soumission faite hors ligne par l'artisan (envoyée à /api/offline-sync). */
 export type OutboxItem = {
+  kind?: "quote";
   id: string; // identifiant final de la soumission (créé sur le téléphone)
   userId: string;
   intent: "sign" | "sms";
@@ -23,6 +25,22 @@ export type OutboxItem = {
   error?: string; // échec définitif (affiché)
   lastError?: string | null; // dernier échec temporaire
 };
+
+/** Signature faite hors ligne par le client, sur le lien /s/[token] (envoyée à /api/remote-sign). */
+export type RemoteSignItem = {
+  kind: "remote";
+  id: string; // "remote:<token>" : une seule signature en attente par lien
+  token: string;
+  signature: string;
+  signedAt: string;
+  createdAt: string;
+  status?: "failed";
+  error?: string;
+  lastError?: string | null;
+};
+
+type AnyItem = OutboxItem | RemoteSignItem;
+const isRemote = (i: AnyItem): i is RemoteSignItem => i.kind === "remote";
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -47,7 +65,7 @@ async function run<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRe
   }
 }
 
-export async function addToOutbox(item: OutboxItem) {
+export async function addToOutbox(item: AnyItem) {
   await run("readwrite", (s) => s.put(item));
   requestFlush();
 }
@@ -59,10 +77,21 @@ export async function removeFromOutbox(id: string) {
 
 export async function listOutbox(userId: string): Promise<OutboxItem[]> {
   try {
-    const all = (await run<OutboxItem[]>("readonly", (s) => s.getAll())) ?? [];
-    return all.filter((i) => i.userId === userId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const all = (await run<AnyItem[]>("readonly", (s) => s.getAll())) ?? [];
+    return all
+      .filter((i): i is OutboxItem => !isRemote(i) && i.userId === userId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   } catch {
     return []; // navigation privée, stockage bloqué…
+  }
+}
+
+/** Signature du client en attente pour ce lien, s'il y en a une sur ce téléphone. */
+export async function getRemotePending(token: string): Promise<RemoteSignItem | null> {
+  try {
+    return ((await run<AnyItem>("readonly", (s) => s.get(`remote:${token}`))) as RemoteSignItem | undefined) ?? null;
+  } catch {
+    return null;
   }
 }
 
