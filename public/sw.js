@@ -1,7 +1,7 @@
 // Service worker : ouverture instantanée et lecture hors ligne.
 // Pas de librairie : la logique tient en trois règles (voir fetch ci-dessous).
 
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC = `static-${VERSION}`; // fichiers versionnés de Next + icônes
 const PAGES = "pages"; // dernières pages vues (données de l'artisan, effacé à la déconnexion)
 const OFFLINE = "/offline.html";
@@ -25,9 +25,18 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Déconnexion : la page demande l'effacement des données en cache.
 self.addEventListener("message", (event) => {
+  // Déconnexion : effacement des pages en cache (données de l'artisan).
   if (event.data === "clear-pages") event.waitUntil(caches.delete(PAGES));
+  // Réseau revenu, app ouverte, ou soumission mise en attente : on vide la file.
+  if (event.data === "flush-outbox") event.waitUntil(flushOutbox());
+  // Après connexion : met en cache les pages utiles hors ligne.
+  if (event.data?.type === "warm") event.waitUntil(warm(event.data.urls));
+});
+
+// Android / Chrome : envoi en arrière-plan même app fermée (Background Sync).
+self.addEventListener("sync", (event) => {
+  if (event.tag === "outbox") event.waitUntil(flushOutbox());
 });
 
 self.addEventListener("fetch", (event) => {
@@ -78,4 +87,101 @@ async function networkFirst(req, event) {
   } catch {
     return (await cache.match(req)) ?? (await caches.match(OFFLINE));
   }
+}
+
+// Met en cache une page jamais ouverte ET ses fichiers JS / CSS : sans eux,
+// la page s'afficherait hors ligne mais resterait inerte.
+async function warm(urls) {
+  const pages = await caches.open(PAGES);
+  const statics = await caches.open(STATIC);
+  await Promise.all(
+    (urls ?? []).map(async (url) => {
+      try {
+        const res = await fetch(url, { credentials: "same-origin" });
+        // Une redirection vers /login (session expirée) n'est pas mise en cache.
+        if (!res.ok || res.redirected) return;
+        const html = await res.clone().text();
+        await pages.put(url, res);
+        const assets = [...new Set(html.match(/\/_next\/static\/[^"'\s)\\]+/g) ?? [])];
+        await Promise.all(
+          assets.map(async (asset) => {
+            if (await statics.match(asset)) return;
+            const a = await fetch(asset);
+            if (a.ok) await statics.put(asset, a);
+          }),
+        );
+      } catch {}
+    }),
+  );
+}
+
+// ---- File d'attente des soumissions faites hors ligne ----
+// Même base que lib/outbox.ts (côté page) : garder OUTBOX_DB / OUTBOX_STORE identiques.
+
+const OUTBOX_DB = "chantier";
+const OUTBOX_STORE = "outbox";
+
+function openOutbox() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(OUTBOX_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(OUTBOX_STORE, { keyPath: "id" });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function tx(db, mode, fn) {
+  return new Promise((resolve, reject) => {
+    const t = db.transaction(OUTBOX_STORE, mode);
+    const result = fn(t.objectStore(OUTBOX_STORE));
+    t.oncomplete = () => resolve(result?.result);
+    t.onerror = () => reject(t.error);
+  });
+}
+
+async function notifyClients() {
+  for (const client of await self.clients.matchAll()) client.postMessage({ type: "outbox-changed" });
+}
+
+let flushing = null; // un seul envoi à la fois : pas de double SMS ni de double signature
+
+function flushOutbox() {
+  flushing ??= doFlush().finally(() => (flushing = null));
+  return flushing;
+}
+
+async function doFlush() {
+  const db = await openOutbox();
+  const items = await tx(db, "readonly", (store) => store.getAll());
+  let retryLater = false;
+
+  for (const item of items ?? []) {
+    if (item.status === "failed") continue;
+    let res;
+    try {
+      res = await fetch("/api/offline-sync", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(item),
+      });
+    } catch {
+      retryLater = true; // toujours pas de réseau
+      break;
+    }
+    if (res.ok) {
+      await tx(db, "readwrite", (store) => store.delete(item.id));
+    } else if (res.status === 409 || res.status === 422) {
+      const { error } = await res.json().catch(() => ({ error: "Envoi refusé." }));
+      await tx(db, "readwrite", (store) => store.put({ ...item, status: "failed", error }));
+    } else {
+      retryLater = true; // session expirée, serveur ou SMS indisponible
+      const { error } = await res.json().catch(() => ({ error: null }));
+      await tx(db, "readwrite", (store) => store.put({ ...item, lastError: error }));
+    }
+    await notifyClients();
+  }
+  db.close();
+  // Background Sync : une erreur demande au navigateur de réessayer plus tard.
+  if (retryLater) throw new Error("outbox: nouvel essai plus tard");
 }

@@ -4,8 +4,12 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { PenLine, Plus, Send, X } from "lucide-react";
 import { createQuote, type QuoteFormState } from "@/app/(app)/soumissions/nouveau/actions";
 import { formatCents } from "@/lib/format";
-import { withNetworkGuard } from "@/lib/network";
-import { computeTotals, isTaxRegime, parseAmount, TPS_LABEL, TVQ_LABEL, type TaxRegime } from "@/lib/quote";
+import { NETWORK_ERROR, withNetworkGuard } from "@/lib/network";
+import {
+  computeTotals, isTaxRegime, parseAmount, parseQuoteInput, TPS_LABEL, TVQ_LABEL,
+  type QuoteFields, type QuoteInput, type TaxRegime,
+} from "@/lib/quote";
+import { OfflineQueued, OfflineSign, queueQuote } from "@/components/quote/offline-quote";
 import { TaxRegimePicker } from "@/components/ui/tax-regime-picker";
 
 type Line = { key: number; description: string; price: string };
@@ -48,8 +52,15 @@ async function submitQuote(prev: QuoteFormState, fd: FormData): Promise<QuoteFor
   }
 }
 
-export function QuoteForm({ defaultTaxRegime }: { defaultTaxRegime: TaxRegime }) {
+type Intent = "sign" | "sms";
+
+export function QuoteForm({ defaultTaxRegime, userId }: { defaultTaxRegime: TaxRegime; userId: string }) {
   const [state, formAction, pending] = useActionState<QuoteFormState, FormData>(submitQuote, { error: null });
+  // Sans réseau : signature sur le téléphone puis envoi différé (components/quote/offline-quote.tsx).
+  const [offlineSign, setOfflineSign] = useState<{ fields: QuoteFields; input: QuoteInput } | null>(null);
+  const [queued, setQueued] = useState<Intent | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const intentRef = useRef<Intent>("sign");
   const [client, setClient] = useState({ name: "", phone: "", address: "" });
   const [lines, setLines] = useState<Line[]>(() => [emptyLine()]);
   const [taxRegime, setTaxRegime] = useState<TaxRegime>(defaultTaxRegime);
@@ -81,12 +92,66 @@ export function QuoteForm({ defaultTaxRegime }: { defaultTaxRegime: TaxRegime })
     setRestored(false);
   };
 
+  const fields = (): QuoteFields => ({
+    clientName: client.name,
+    phone: client.phone,
+    siteAddress: client.address,
+    taxRegime,
+    lines: lines.map(({ description, price }) => ({ description, price })),
+  });
+
+  const goOffline = async (intent: Intent) => {
+    const f = fields();
+    const parsed = parseQuoteInput(f);
+    if ("error" in parsed) return setLocalError(parsed.error);
+    if (intent === "sign") return setOfflineSign({ fields: f, input: parsed.input });
+    try {
+      await queueQuote({ userId, intent, fields: f, input: parsed.input });
+      writeDraft(null);
+      setQueued("sms");
+    } catch {
+      setLocalError("Enregistrement sur le téléphone impossible.");
+    }
+  };
+
+  const onSubmit = (fd: FormData) => {
+    const intent: Intent = fd.get("intent") === "sms" ? "sms" : "sign";
+    intentRef.current = intent;
+    setLocalError(null);
+    if (!navigator.onLine) return void goOffline(intent);
+    formAction(fd);
+  };
+
+  // Réseau annoncé mais l'envoi échoue (réseau très faible) : même bascule hors ligne.
+  useEffect(() => {
+    if (state.error === NETWORK_ERROR) void goOffline(intentRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
   const totals = computeTotals(lines.map((l) => parseAmount(l.price) ?? 0), taxRegime);
   const updateLine = (key: number, patch: Partial<Line>) =>
     setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
+  if (queued) return <OfflineQueued intent={queued} />;
+  if (offlineSign) {
+    return (
+      <OfflineSign
+        userId={userId}
+        {...offlineSign}
+        onBack={() => setOfflineSign(null)}
+        onQueued={() => {
+          writeDraft(null);
+          setOfflineSign(null);
+          setQueued("sign");
+        }}
+      />
+    );
+  }
+
+  const error = localError ?? (state.error === NETWORK_ERROR ? null : state.error);
+
   return (
-    <form action={formAction} className="pb-[calc(160px+env(safe-area-inset-bottom))]">
+    <form action={onSubmit} className="pb-[calc(160px+env(safe-area-inset-bottom))]">
       {restored && (
         <div className="flex items-center justify-between border-b border-line pl-4 pr-1 text-[14px] text-muted">
           <span>Brouillon restauré</span>
@@ -104,7 +169,7 @@ export function QuoteForm({ defaultTaxRegime }: { defaultTaxRegime: TaxRegime })
         <div>
           <label htmlFor="phone" className={label}>Téléphone (SMS)</label>
           <input id="phone" name="phone" type="tel" inputMode="tel" className={input} autoComplete="off" required
-            placeholder="06 12 34 56 78"
+            placeholder="514 555-1234"
             value={client.phone} onChange={(e) => setClient({ ...client, phone: e.target.value })} />
         </div>
         <div>
@@ -165,7 +230,7 @@ export function QuoteForm({ defaultTaxRegime }: { defaultTaxRegime: TaxRegime })
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-lg space-y-2">
-          {state.error && <p role="alert" className="text-[14px] text-late">{state.error}</p>}
+          {error && <p role="alert" className="text-[14px] text-late">{error}</p>}
           <button type="submit" name="intent" value="sms" disabled={pending}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-50">
             <Send size={18} strokeWidth={1.75} aria-hidden />

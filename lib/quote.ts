@@ -48,3 +48,48 @@ export function computeTotals(lineCents: number[], regime: TaxRegime) {
   const tvq = regime === "qc" ? taxOf(subtotal, TVQ_RATE) : 0;
   return { subtotal, tps, tvq, tax: tps + tvq, total: subtotal + tps + tvq };
 }
+
+// ---- Validation d'une soumission (téléphone avant mise en attente, et serveur) ----
+
+export type QuoteFields = {
+  clientName: string;
+  phone: string;
+  siteAddress: string;
+  taxRegime: unknown;
+  lines: { description: string; price: string }[];
+};
+
+export type QuoteInput = {
+  clientName: string;
+  phone: string; // E.164
+  siteAddress: string | null;
+  taxRegime: TaxRegime;
+  items: { description: string; cents: number }[];
+};
+
+export function parseQuoteInput(f: QuoteFields): { input: QuoteInput } | { error: string } {
+  const clientName = f.clientName.trim();
+  const phone = normalizePhone(f.phone);
+  // Les lignes entièrement vides sont ignorées.
+  const lines = f.lines
+    .map((l) => ({ description: l.description.trim(), price: l.price.trim() }))
+    .filter((l) => l.description || l.price);
+  const items = lines.map((l) => ({ description: l.description, cents: parseAmount(l.price) }));
+
+  if (!clientName) return { error: "Nom du client manquant." };
+  if (!phone) return { error: "Numéro de téléphone invalide." };
+  if (!isTaxRegime(f.taxRegime)) return { error: "Régime de taxes invalide." };
+  if (items.length === 0) return { error: "Ajoutez au moins une ligne." };
+  if (items.some((it) => !it.description)) return { error: "Une ligne n'a pas de description." };
+  if (items.some((it) => it.cents === null)) return { error: "Un prix est invalide." };
+
+  return {
+    input: {
+      clientName,
+      phone,
+      siteAddress: f.siteAddress.trim() || null,
+      taxRegime: f.taxRegime,
+      items: items as { description: string; cents: number }[],
+    },
+  };
+}

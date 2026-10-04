@@ -207,7 +207,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
     y -= 14;
     text("ACCEPTATION DU CLIENT", M, y, { size: 8, color: MUTED });
     y -= 13;
-    const how = invoice.signed_via === "remote" ? "en ligne" : "sur place";
+    const how = invoice.signed_via === "remote" ? "en ligne" : invoice.signed_offline ? "sur place (hors ligne)" : "sur place";
     text(`Signée ${how} par ${invoice.client.name} le ${date(invoice.signed_at)}`, M, y);
     if (signaturePng) {
       const img = await doc.embedPng(signaturePng);

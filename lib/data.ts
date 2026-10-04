@@ -140,6 +140,7 @@ function demoDetails(): InvoiceDetail[] {
       stripe_payment_link_url: inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
       signature_path: null,
       signed_via: inv.signed_at ? "on_site" : null,
+      signed_offline: false,
       created_at: inv.sent_at,
       line_items: [
         { position: 0, description: "Remplacement panneau électrique 200 A", quantity: 1, unit_price_cents: material, total_cents: material },
@@ -161,4 +162,10 @@ function demoDashboard() {
     pending: invoices.filter((i) => PENDING.has(i.status)),
     paid: invoices.filter((i) => i.status === "paid"),
   };
+}
+
+/** Identifiant de l'artisan connecté ("demo" en mode démo). Sert à rattacher la file hors ligne au bon compte. */
+export async function getCurrentUserId(): Promise<string | null> {
+  if (!isSupabaseConfigured) return "demo";
+  return getUserId(await createClient());
 }

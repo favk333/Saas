@@ -4,12 +4,12 @@ import { ChevronLeft } from "lucide-react";
 import { LogoutButton } from "@/components/settings/logout-button";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
-import { getProfile } from "@/lib/data";
+import { getCurrentUserId, getProfile } from "@/lib/data";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string }> }) {
   const { bienvenue, stripe } = await searchParams;
-  const profile = await getProfile();
-  if (!profile) redirect("/login");
+  const [profile, userId] = await Promise.all([getProfile(), getCurrentUserId()]);
+  if (!profile || !userId) redirect("/login");
   const welcome = Boolean(bienvenue) || !profile.company_name;
 
   return (
@@ -40,7 +40,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} />
           <Section title="Compte">
             {profile.email && <p className="text-[15px]">{profile.email}</p>}
-            <LogoutButton />
+            <LogoutButton userId={userId} />
           </Section>
         </>
       )}

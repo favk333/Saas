@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { QuoteForm } from "@/components/quote/quote-form";
-import { getDefaultTaxRegime } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { getCurrentUserId, getDefaultTaxRegime } from "@/lib/data";
 
 export default async function NewQuotePage() {
-  const defaultTaxRegime = await getDefaultTaxRegime();
+  const [defaultTaxRegime, userId] = await Promise.all([getDefaultTaxRegime(), getCurrentUserId()]);
+  if (!userId) redirect("/login");
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-white">
@@ -14,7 +16,7 @@ export default async function NewQuotePage() {
         </Link>
         <h1 className="text-[17px] font-semibold">Nouvelle soumission</h1>
       </header>
-      <QuoteForm defaultTaxRegime={defaultTaxRegime} />
+      <QuoteForm defaultTaxRegime={defaultTaxRegime} userId={userId} />
     </div>
   );
 }

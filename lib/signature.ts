@@ -23,6 +23,7 @@ export async function recordSignature(
   png: Buffer,
   channel: "on_site" | "remote",
   fromStatuses: string[],
+  offline?: { signedAt: string },
 ) {
   const path = `${invoice.user_id}/${invoice.id}.png`;
   const { error: uploadError } = await supabase.storage
@@ -39,10 +40,24 @@ export async function recordSignature(
       signature_path: path,
       signature_ip: h.get("x-forwarded-for")?.split(",")[0].trim() ?? null,
       signature_user_agent: h.get("user-agent")?.slice(0, 300) ?? null,
+      // Signée hors ligne : on garde l'heure de la signature, pas celle de l'envoi.
+      ...(offline ? { signed_at: offline.signedAt, signed_offline: true } : {}),
     })
     .eq("id", invoice.id)
     .in("status", fromStatuses) // garde-fou contre une double signature
     .select("id");
   if (error) throw error;
   return (data?.length ?? 0) > 0;
+}
+
+const MAX_OFFLINE_AGE = 30 * 86_400_000;
+
+/**
+ * Heure de signature déclarée par le téléphone, bornée : jamais dans le futur,
+ * jamais plus de 30 jours en arrière (horloge du téléphone fausse ou falsifiée).
+ */
+export function clampSignedAt(value: unknown, now = new Date()): string {
+  const t = typeof value === "string" ? Date.parse(value) : NaN;
+  if (Number.isNaN(t)) return now.toISOString();
+  return new Date(Math.min(now.getTime(), Math.max(t, now.getTime() - MAX_OFFLINE_AGE))).toISOString();
 }

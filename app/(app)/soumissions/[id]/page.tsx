@@ -38,7 +38,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
       <dl className="space-y-1 border-t border-line px-4 py-4 text-[14px] text-muted">
         {isInvoice && <div className="flex justify-between"><dt>Soumission</dt><dd className="tabular-nums">{invoice.quote_number}</dd></div>}
-        {invoice.signed_at && <div className="flex justify-between"><dt>Signée</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
+        {invoice.signed_at && <div className="flex justify-between"><dt>Signée{invoice.signed_offline ? " (hors ligne)" : ""}</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
         {invoice.due_at && !invoice.paid_at && <div className="flex justify-between"><dt>Échéance</dt><dd>{dateTime(invoice.due_at)}</dd></div>}
         {invoice.paid_at && <div className="flex justify-between text-paid"><dt>Payée</dt><dd>{dateTime(invoice.paid_at)}</dd></div>}
       </dl>
