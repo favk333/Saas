@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Eraser } from "lucide-react";
+import { withNetworkGuard } from "@/lib/network";
 
 export type SignatureState = { error: string | null };
 type Point = { x: number; y: number };
@@ -19,7 +20,9 @@ export function SignatureForm({
   action: (prev: SignatureState, formData: FormData) => Promise<SignatureState>;
   fields: Record<string, string>;
 }) {
-  const [state, dispatch, pending] = useActionState(action, { error: null });
+  // Coupure réseau : message d'erreur, la signature reste dessinée pour réessayer.
+  const guarded = useMemo(() => withNetworkGuard(action), [action]);
+  const [state, dispatch, pending] = useActionState(guarded, { error: null });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokes = useRef<Point[][]>([]);
   const drawing = useRef(false);

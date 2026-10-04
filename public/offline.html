@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>Hors ligne</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    background: #fff; color: #111827; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+    max-width: 32rem; margin: 0 auto;
+  }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  p { margin-top: 8px; font-size: 15px; line-height: 1.45; color: #6B7280; }
+  button {
+    margin-top: 24px; width: 100%; height: 52px; border: 0; border-radius: 6px;
+    background: #111827; color: #fff; font: inherit; font-size: 16px; font-weight: 500;
+  }
+  button:active { background: #000; }
+</style>
+</head>
+<body>
+  <h1>Pas de réseau</h1>
+  <p>Cette page n'a pas encore été ouverte sur ce téléphone. Les devis déjà consultés restent accessibles.</p>
+  <button onclick="location.reload()">Réessayer</button>
+</body>
+</html>

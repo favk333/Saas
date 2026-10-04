@@ -5,6 +5,9 @@ import { Check } from "lucide-react";
 import { saveProfile, type SettingsState } from "@/app/(app)/reglages/actions";
 import { TaxRatePicker } from "@/components/ui/tax-rate-picker";
 import type { Profile } from "@/lib/data";
+import { withNetworkGuard } from "@/lib/network";
+
+const save = withNetworkGuard(saveProfile);
 
 const input =
   "h-12 w-full rounded-md border border-line bg-white px-3 text-[16px] outline-none placeholder:text-muted/60 focus:border-ink";
@@ -17,7 +20,7 @@ function displayPhone(e164: string | null) {
 }
 
 export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: boolean }) {
-  const [state, action, pending] = useActionState<SettingsState, FormData>(saveProfile, { error: null });
+  const [state, action, pending] = useActionState<SettingsState, FormData>(save, { error: null });
   const [values, setValues] = useState({
     companyName: profile.company_name,
     phone: displayPhone(profile.phone),

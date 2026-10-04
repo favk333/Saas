@@ -3,9 +3,12 @@
 import { useActionState } from "react";
 import { Check, MessageSquare } from "lucide-react";
 import { remindBySms, type RemindState } from "@/app/(app)/actions";
+import { withNetworkGuard } from "@/lib/network";
+
+const remind = withNetworkGuard(remindBySms);
 
 export function RemindButton({ invoiceId }: { invoiceId: string }) {
-  const [state, action, pending] = useActionState<RemindState, FormData>(remindBySms, { error: null });
+  const [state, action, pending] = useActionState<RemindState, FormData>(remind, { error: null });
 
   return (
     <form action={action} className="mt-3">

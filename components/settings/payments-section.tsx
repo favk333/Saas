@@ -3,13 +3,16 @@
 import { useActionState } from "react";
 import { ArrowUpRight, CircleCheck } from "lucide-react";
 import { startStripeOnboarding, type SettingsState } from "@/app/(app)/reglages/actions";
+import { withNetworkGuard } from "@/lib/network";
 import { Section } from "./profile-form";
+
+const onboard = withNetworkGuard(startStripeOnboarding);
 
 const button =
   "flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-50";
 
 export function PaymentsSection({ accountId, enabled, failed }: { accountId: string | null; enabled: boolean; failed: boolean }) {
-  const [state, action, pending] = useActionState<SettingsState>(startStripeOnboarding, { error: null });
+  const [state, action, pending] = useActionState<SettingsState>(onboard, { error: null });
   const error = state.error ?? (failed ? "Stripe indisponible. Réessayez dans un instant." : null);
 
   if (enabled) {

@@ -22,9 +22,11 @@ Supabase : appliquer la migration, puis dans *Authentication → URL Configurati
 app/
   layout.tsx                     ✓ racine, viewport mobile, safe areas
   globals.css                    ✓ tokens couleurs (6 couleurs, pas de dégradé)
-  manifest.ts                    ✓ manifeste PWA
-  icon.svg                       ✓
+  manifest.ts                    ✓ manifeste PWA (icônes PNG, raccourci « Nouveau devis »)
+  icon.svg                       ✓ favicon
   (app)/                         écrans authentifiés
+    layout.tsx                   ✓ bandeau « Hors ligne »
+    error.tsx                    ✓ écran de secours (réseau coupé)
     page.tsx                     ✓ Dashboard
     actions.ts                   ✓ relance SMS manuelle
     devis/nouveau/page.tsx       ✓ création devis
@@ -50,7 +52,9 @@ components/
   invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
   signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
   settings/                      ✓ formulaire profil, section paiements
-  ui/tax-rate-picker.tsx         ✓ sélecteur TVA 20 / 10 / 5,5 %
+  ui/tax-rate-picker.tsx         ✓ sélecteur TVA 20 / 10 / 5,5 % / sans
+  service-worker.tsx             ✓ enregistrement du SW, effacement du cache
+  offline-banner.tsx             ✓ bandeau hors ligne
 lib/
   types.ts                       ✓ types + statut dérivé "En retard"
   format.ts                      ✓ montants €, dates relatives
@@ -59,6 +63,7 @@ lib/
   supabase/{config,server}.ts    ✓ client Supabase SSR
   twilio.ts                      ✓ envoi SMS (API REST)
   reminders.ts                   ✓ calendrier J+3 / J+7 + textes des SMS
+  network.ts                     ✓ garde réseau des formulaires (pas d'écran perdu)
   supabase/admin.ts              ✓ client service role (pages publiques, cron)
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
@@ -67,6 +72,10 @@ lib/
   invoice-pdf.ts                 ✓ données vendeur + signature → réponse PDF
 proxy.ts                         ✓ session Supabase + redirection /login
 vercel.json                      ✓ cron quotidien 8 h UTC
+public/
+  sw.js                          ✓ service worker (écrit à la main, sans librairie)
+  offline.html                   ✓ page hors ligne autonome
+  icons/                         ✓ 192, 512, maskable, apple-touch-icon
 supabase/
   migrations/0001_init.sql       ✓ profiles, clients, invoices, line_items + RLS
   migrations/0002_signatures.sql ✓ bucket privé "signatures" + preuves (IP, user agent, canal)
@@ -124,3 +133,15 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
   - assurance décennale ;
   - signature du client, avec sa date et son canal (sur place ou en ligne).
 - Généré à la demande, rien n'est stocké. Police Helvetica standard (jeu WinAnsi) : les caractères non couverts, comme les emoji, sont retirés.
+
+## PWA et réseau faible
+
+- **Service worker** (`public/sw.js`, actif uniquement en production) :
+  - fichiers versionnés de Next (`/_next/static`) : servis depuis le cache ;
+  - pages : réseau d'abord avec un délai de **3 s**, puis la dernière version vue, puis `offline.html` ;
+  - jamais en cache : `/api`, `/auth`, `/login`, `/s/…`, les PDF, les envois de formulaires.
+- **Déconnexion** : les pages en cache, qui contiennent les données de l'artisan, sont effacées.
+- **Formulaires** : hors ligne ou coupure en cours d'envoi, un message s'affiche et la saisie reste à l'écran (`lib/network.ts`).
+- **Brouillon de devis** : enregistré sur le téléphone à chaque frappe, restauré à la réouverture, effacé après un envoi réussi.
+- **Nouvelle version** : changer `VERSION` dans `sw.js` vide l'ancien cache des fichiers statiques.
+- Pas de file d'attente hors ligne : créer, signer ou relancer demande du réseau.

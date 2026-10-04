@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, LogOut } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { LogoutButton } from "@/components/settings/logout-button";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
 import { getProfile } from "@/lib/data";
-import { signOut } from "./actions";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string }> }) {
   const { bienvenue, stripe } = await searchParams;
@@ -40,12 +40,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} />
           <Section title="Compte">
             {profile.email && <p className="text-[15px]">{profile.email}</p>}
-            <form action={signOut}>
-              <button className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium text-late active:bg-canvas">
-                <LogOut size={18} strokeWidth={1.75} aria-hidden />
-                Se déconnecter
-              </button>
-            </form>
+            <LogoutButton />
           </Section>
         </>
       )}

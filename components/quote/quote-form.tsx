@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { PenLine, Plus, Send, X } from "lucide-react";
 import { createQuote, type QuoteFormState } from "@/app/(app)/devis/nouveau/actions";
 import { formatCents } from "@/lib/format";
+import { withNetworkGuard } from "@/lib/network";
 import { computeTotals, parseEuros } from "@/lib/quote";
 import { TaxRatePicker } from "@/components/ui/tax-rate-picker";
 
@@ -16,11 +17,69 @@ const label = "mb-1 block text-[13px] text-muted";
 let nextKey = 1;
 const emptyLine = (): Line => ({ key: nextKey++, description: "", price: "" });
 
+// Brouillon conservé sur le téléphone : une coupure réseau ou une app fermée ne fait rien perdre.
+const DRAFT_KEY = "chantier:quote-draft";
+type Draft = { client: { name: string; phone: string; address: string }; lines: Omit<Line, "key">[]; taxBps: number };
+
+const readDraft = (): Draft | null => {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null");
+  } catch {
+    return null;
+  }
+};
+const writeDraft = (d: Draft | null) => {
+  try {
+    if (d) localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    else localStorage.removeItem(DRAFT_KEY);
+  } catch {}
+};
+const isRedirect = (e: unknown) => String((e as { digest?: unknown })?.digest ?? "").startsWith("NEXT_REDIRECT");
+
+const guardedCreateQuote = withNetworkGuard(createQuote);
+async function submitQuote(prev: QuoteFormState, fd: FormData): Promise<QuoteFormState> {
+  try {
+    const res = await guardedCreateQuote(prev, fd);
+    if (!res.error) writeDraft(null);
+    return res;
+  } catch (e) {
+    if (isRedirect(e)) writeDraft(null); // succès : le serveur redirige vers la signature ou l'accueil
+    throw e;
+  }
+}
+
 export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
-  const [state, formAction, pending] = useActionState<QuoteFormState, FormData>(createQuote, { error: null });
+  const [state, formAction, pending] = useActionState<QuoteFormState, FormData>(submitQuote, { error: null });
   const [client, setClient] = useState({ name: "", phone: "", address: "" });
   const [lines, setLines] = useState<Line[]>(() => [emptyLine()]);
   const [taxBps, setTaxBps] = useState(defaultTaxBps);
+  const [restored, setRestored] = useState(false);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    const d = readDraft();
+    if (d) {
+      setClient(d.client);
+      setLines(d.lines.length ? d.lines.map((l) => ({ ...l, key: nextKey++ })) : [emptyLine()]);
+      setTaxBps(d.taxBps);
+      setRestored(true);
+    }
+    loaded.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    const empty = !client.name && !client.phone && !client.address && lines.every((l) => !l.description && !l.price);
+    writeDraft(empty ? null : { client, lines: lines.map(({ description, price }) => ({ description, price })), taxBps });
+  }, [client, lines, taxBps]);
+
+  const discardDraft = () => {
+    writeDraft(null);
+    setClient({ name: "", phone: "", address: "" });
+    setLines([emptyLine()]);
+    setTaxBps(defaultTaxBps);
+    setRestored(false);
+  };
 
   const totals = computeTotals(lines.map((l) => parseEuros(l.price) ?? 0), taxBps);
   const updateLine = (key: number, patch: Partial<Line>) =>
@@ -28,6 +87,14 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
 
   return (
     <form action={formAction} className="pb-[calc(160px+env(safe-area-inset-bottom))]">
+      {restored && (
+        <div className="flex items-center justify-between border-b border-line pl-4 pr-1 text-[14px] text-muted">
+          <span>Brouillon restauré</span>
+          <button type="button" onClick={discardDraft} className="h-12 rounded-md px-3 font-medium text-ink active:bg-canvas">
+            Tout effacer
+          </button>
+        </div>
+      )}
       <Section title="Client">
         <div>
           <label htmlFor="clientName" className={label}>Nom</label>

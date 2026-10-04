@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Check, CreditCard, PenLine, Send, Share } from "lucide-react";
 import { generatePaymentLink, sendPaymentLinkSms, type ActionState } from "@/app/(app)/devis/[id]/actions";
+import { withNetworkGuard } from "@/lib/network";
 import type { DisplayStatus } from "@/lib/types";
+
+const generateLink = withNetworkGuard(generatePaymentLink);
+const sendLinkSms = withNetworkGuard(sendPaymentLinkSms);
 
 const primary =
   "flex h-13 w-full items-center justify-center gap-2 rounded-md bg-ink text-[16px] font-medium text-white active:bg-black disabled:opacity-50";
@@ -12,8 +16,8 @@ const secondary =
   "flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-50";
 
 export function InvoiceActions({ id, status, paymentUrl }: { id: string; status: DisplayStatus; paymentUrl: string | null }) {
-  const [linkState, generate, generating] = useActionState<ActionState, FormData>(generatePaymentLink, { error: null });
-  const [smsState, sendSms, sending] = useActionState<ActionState, FormData>(sendPaymentLinkSms, { error: null });
+  const [linkState, generate, generating] = useActionState<ActionState, FormData>(generateLink, { error: null });
+  const [smsState, sendSms, sending] = useActionState<ActionState, FormData>(sendLinkSms, { error: null });
   const [copied, setCopied] = useState(false);
 
   if (status === "paid") return null;
