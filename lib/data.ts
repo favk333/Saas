@@ -1,5 +1,5 @@
 import { createAdminClient } from "./supabase/admin";
-import { createClient, getUserId } from "./supabase/server";
+import { createClient, getUser, getUserId } from "./supabase/server";
 import { isSupabaseConfigured } from "./supabase/config";
 import { INVOICE_DETAIL_SELECT, type Invoice, type InvoiceDetail } from "./types";
 
@@ -10,7 +10,7 @@ export async function getDashboard() {
 
   const supabase = await createClient();
   const [{ data: profile }, { data, error }] = await Promise.all([
-    supabase.from("profiles").select("company_name").maybeSingle(),
+    supabase.from("profiles").select("company_name, stripe_charges_enabled").maybeSingle(),
     supabase
       .from("invoices")
       .select("id, status, quote_number, invoice_number, total_cents, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone)")
@@ -22,7 +22,8 @@ export async function getDashboard() {
 
   const invoices = (data ?? []) as unknown as Invoice[];
   return {
-    companyName: profile?.company_name || "Mon entreprise",
+    companyName: (profile?.company_name as string | undefined) ?? "",
+    paymentsEnabled: Boolean(profile?.stripe_charges_enabled),
     pending: invoices.filter((i) => PENDING.has(i.status)),
     paid: invoices.filter((i) => i.status === "paid"),
   };
@@ -71,6 +72,36 @@ export async function getInvoiceByToken(token: string) {
   return { invoice, companyName: profile?.company_name || "" };
 }
 
+export type Profile = {
+  email: string | null;
+  company_name: string;
+  phone: string | null;
+  siret: string | null;
+  address: string | null;
+  default_tax_bps: number;
+  stripe_account_id: string | null;
+  stripe_charges_enabled: boolean;
+};
+
+export async function getProfile(): Promise<Profile | null> {
+  if (!isSupabaseConfigured) {
+    return {
+      email: "contact@dupont-elec.fr", company_name: "Dupont Électricité", phone: "+33611223344",
+      siret: "12345678900012", address: "4 rue du Port, 69002 Lyon", default_tax_bps: 2000,
+      stripe_account_id: null, stripe_charges_enabled: false,
+    };
+  }
+  const supabase = await createClient();
+  const user = await getUser(supabase);
+  if (!user) return null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("company_name, phone, siret, address, default_tax_bps, stripe_account_id, stripe_charges_enabled")
+    .eq("id", user.id)
+    .maybeSingle();
+  return data ? { email: user.email, ...data } : null;
+}
+
 // ---- Mode démo (pas de .env.local) ----
 
 function demoDetail(match: (i: InvoiceDetail) => boolean): InvoiceDetail | null {
@@ -110,6 +141,7 @@ function demoDashboard() {
   ];
   return {
     companyName: "Dupont Électricité",
+    paymentsEnabled: true,
     pending: invoices.filter((i) => PENDING.has(i.status)),
     paid: invoices.filter((i) => i.status === "paid"),
   };

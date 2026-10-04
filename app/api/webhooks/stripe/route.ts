@@ -24,6 +24,17 @@ export async function POST(request: NextRequest) {
   const event = signature ? verify(body, signature) : null;
   if (!event) return NextResponse.json({ error: "invalid signature" }, { status: 400 });
 
+  // Statut du compte Connect de l'artisan (vérification d'identité terminée, compte suspendu…).
+  if (event.type === "account.updated") {
+    const account = event.data.object;
+    const { error } = await createAdminClient()
+      .from("profiles")
+      .update({ stripe_charges_enabled: account.charges_enabled })
+      .eq("stripe_account_id", account.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ received: true });
+  }
+
   const paid =
     (event.type === "checkout.session.completed" && event.data.object.payment_status === "paid") ||
     event.type === "checkout.session.async_payment_succeeded";

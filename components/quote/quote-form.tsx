@@ -4,7 +4,8 @@ import { useActionState, useState } from "react";
 import { PenLine, Plus, Send, X } from "lucide-react";
 import { createQuote, type QuoteFormState } from "@/app/(app)/devis/nouveau/actions";
 import { formatCents } from "@/lib/format";
-import { TAX_RATES, computeTotals, parseEuros } from "@/lib/quote";
+import { computeTotals, parseEuros } from "@/lib/quote";
+import { TaxRatePicker } from "@/components/ui/tax-rate-picker";
 
 type Line = { key: number; description: string; price: string };
 
@@ -79,18 +80,7 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
       </Section>
 
       <Section title="TVA">
-        <div role="radiogroup" aria-label="Taux de TVA" className="grid grid-cols-3 rounded-md border border-line p-0.5">
-          {TAX_RATES.map((r) => (
-            <label key={r.bps}
-              className={`flex h-11 cursor-pointer items-center justify-center rounded-[5px] text-[15px] tabular-nums has-focus-visible:outline-2 has-focus-visible:outline-ink ${
-                taxBps === r.bps ? "bg-ink font-medium text-white" : "text-ink"
-              }`}>
-              <input type="radio" name="taxBps" value={r.bps} checked={taxBps === r.bps}
-                onChange={() => setTaxBps(r.bps)} className="sr-only" />
-              {r.label}
-            </label>
-          ))}
-        </div>
+        <TaxRatePicker name="taxBps" value={taxBps} onChange={setTaxBps} />
       </Section>
 
       <dl className="space-y-1.5 px-4 py-5 text-[15px] tabular-nums">

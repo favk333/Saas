@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowRight, Plus, Settings } from "lucide-react";
 import { InvoiceRow } from "@/components/dashboard/invoice-row";
 import { getDashboard } from "@/lib/data";
 import { formatCents } from "@/lib/format";
@@ -9,7 +10,8 @@ type Tab = "pending" | "paid";
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab: tabParam } = await searchParams;
   const tab: Tab = tabParam === "paid" ? "paid" : "pending";
-  const { companyName, pending, paid } = await getDashboard();
+  const { companyName, paymentsEnabled, pending, paid } = await getDashboard();
+  if (!companyName) redirect("/reglages?bienvenue=1");
   const list = tab === "paid" ? paid : pending;
   const now = new Date();
 
@@ -18,11 +20,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-white">
       <header className="sticky top-0 z-10 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
-        <div className="px-4 pt-4">
-          <p className="truncate text-[15px] font-semibold">{companyName}</p>
-          <p className="mt-3 text-[13px] text-muted">À encaisser</p>
+        <div className="pl-4 pr-1 pt-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-[15px] font-semibold">{companyName}</p>
+            <Link href="/reglages" aria-label="Réglages" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-muted active:bg-canvas">
+              <Settings size={20} strokeWidth={1.75} aria-hidden />
+            </Link>
+          </div>
+          <p className="text-[13px] text-muted">À encaisser</p>
           <p className="text-[28px] leading-9 font-semibold tracking-tight tabular-nums">{formatCents(outstanding)}</p>
         </div>
+
+        {!paymentsEnabled && (
+          <Link href="/reglages" className="mx-4 mt-3 flex h-12 items-center justify-between rounded-md border border-line px-3 text-[14px] active:bg-canvas">
+            <span>Paiements en ligne non activés</span>
+            <span className="flex items-center gap-1 font-medium">
+              Activer <ArrowRight size={16} strokeWidth={1.75} aria-hidden />
+            </span>
+          </Link>
+        )}
 
         <nav className="mt-2 grid grid-cols-2 px-4" aria-label="Filtrer">
           <TabLink href="/" active={tab === "pending"} label="En attente de paiement" count={pending.length} />

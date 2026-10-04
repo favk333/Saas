@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { SignatureState } from "@/components/signature/signature-form";
 import { getInvoice } from "@/lib/data";
 import { formatCents } from "@/lib/format";
-import { ensurePaymentLink } from "@/lib/payments";
+import { ensurePaymentLink, PaymentsNotEnabledError } from "@/lib/payments";
 import { decodeSignature, recordSignature } from "@/lib/signature";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient, getUserId } from "@/lib/supabase/server";
@@ -39,8 +39,9 @@ export async function generatePaymentLink(_prev: ActionState, formData: FormData
   if (!isSupabaseConfigured) return { error: DEMO };
   try {
     await ensurePaymentLink(await createClient(), id);
-  } catch {
-    return { error: "Création du lien impossible. Vérifiez la configuration Stripe." };
+  } catch (e) {
+    if (e instanceof PaymentsNotEnabledError) return { error: "Activez d'abord les paiements dans Réglages." };
+    return { error: "Création du lien impossible. Réessayez." };
   }
   revalidatePath(`/devis/${id}`);
   return { error: null };

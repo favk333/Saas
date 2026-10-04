@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getInvoice } from "@/lib/data";
-import { ensurePaymentLink } from "@/lib/payments";
+import { ensurePaymentLink, PaymentsNotEnabledError } from "@/lib/payments";
 import { reminderSms, signatureReminderSms } from "@/lib/reminders";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -49,7 +49,8 @@ export async function remindBySms(_prev: RemindState, formData: FormData): Promi
             url: await ensurePaymentLink(supabase, id),
           });
     await sendSms(inv.client.phone, body);
-  } catch {
+  } catch (e) {
+    if (e instanceof PaymentsNotEnabledError) return { error: "Activez d'abord les paiements dans Réglages." };
     return { error: "SMS non envoyé. Réessayez." };
   }
 

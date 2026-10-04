@@ -22,3 +22,9 @@ export async function getUserId(supabase: Awaited<ReturnType<typeof createClient
   const { data } = await supabase.auth.getClaims();
   return (data?.claims.sub as string | undefined) ?? null;
 }
+
+export async function getUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims.sub) return null;
+  return { id: data.claims.sub as string, email: (data.claims.email as string | undefined) ?? null };
+}

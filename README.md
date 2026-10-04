@@ -32,18 +32,23 @@ app/
     devis/[id]/page.tsx          ✓ détail devis / facture + lien de paiement
     devis/[id]/signer/page.tsx   ✓ signature tactile sur place
     devis/[id]/actions.ts        ✓ signer, générer / envoyer le lien
+    reglages/page.tsx            ✓ profil entreprise, TVA par défaut, Stripe, déconnexion
+    reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
   (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
   auth/callback/route.ts         ✓ retour du lien magique
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
   api/
     cron/relances/route.ts       ✓ relances J+3 / J+7 (Vercel Cron)
-    webhooks/stripe/route.ts     ✓ paiement reçu → statut "paid"
+    webhooks/stripe/route.ts     ✓ paiement reçu → "paid" ; account.updated → statut Connect
+    stripe/connect/route.ts      ✓ retour / relance de l'onboarding Stripe
 components/
   dashboard/                     ✓ invoice-row, status-badge, remind-button
   quote/quote-form.tsx           ✓ formulaire devis (totaux en direct)
   quote/quote-summary.tsx        ✓ récapitulatif lignes + totaux
   invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
   signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
+  settings/                      ✓ formulaire profil, section paiements
+  ui/tax-rate-picker.tsx         ✓ sélecteur TVA 20 / 10 / 5,5 %
 lib/
   types.ts                       ✓ types + statut dérivé "En retard"
   format.ts                      ✓ montants €, dates relatives
@@ -54,12 +59,14 @@ lib/
   reminders.ts                   ✓ calendrier J+3 / J+7 + textes des SMS
   supabase/admin.ts              ✓ client service role (pages publiques, cron)
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
-  stripe.ts  payments.ts         ✓ Payment Link (Stripe Connect si configuré)
+  stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
+  connect.ts                     ✓ création du compte Connect, onboarding, synchro statut
 proxy.ts                         ✓ session Supabase + redirection /login
 vercel.json                      ✓ cron quotidien 8 h UTC
 supabase/
   migrations/0001_init.sql       ✓ profiles, clients, invoices, line_items + RLS
   migrations/0002_signatures.sql ✓ bucket privé "signatures" + preuves (IP, user agent, canal)
+  migrations/0003_profile_stripe.sql ✓ adresse, statut Stripe, colonnes du profil verrouillées
 ```
 
 ## Base de données
@@ -89,3 +96,13 @@ Test manuel du cron :
 curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 # {"checked":4,"sent":2,"failed":[]}
 ```
+
+## Stripe Connect
+
+- Chaque artisan a son **compte Stripe standard** : il reçoit l'argent directement, gère ses virements et ses litiges dans Stripe. Les liens de paiement sont créés sur son compte (direct charges).
+- **Aucun lien de paiement n'est créé tant que le compte n'est pas activé** (`stripe_charges_enabled`) : l'argent n'arrive jamais sur le compte de la plateforme.
+- Parcours : Réglages → « Activer les paiements » → formulaire Stripe → retour sur `/api/stripe/connect?mode=return`, qui relit le statut. Le webhook `account.updated` le tient ensuite à jour.
+- Configuration Stripe :
+  1. Activer Connect sur le compte plateforme.
+  2. Créer un webhook « comptes connectés » vers `/api/webhooks/stripe` avec `account.updated`, `checkout.session.completed` et `checkout.session.async_payment_succeeded`. Son secret va dans `STRIPE_CONNECT_WEBHOOK_SECRET`.
+- Les colonnes Stripe et les compteurs de numérotation du profil ne sont modifiables que côté serveur (privilèges par colonne, migration 0003).
