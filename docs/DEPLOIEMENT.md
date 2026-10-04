@@ -154,6 +154,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
   - Vérifier que l'icône s'affiche et que l'app s'ouvre en plein écran.
 - [ ] **Hors ligne** : ouvrir l'accueil et une facture, passer en mode avion, rouvrir l'app. Les données s'affichent avec le bandeau « Hors ligne ».
 - [ ] **Signature hors ligne** : ouvrir l'app une fois en ligne, passer en mode avion, « Nouvelle soumission » → « Faire signer sur place » → signer. L'accueil affiche « En attente d'envoi ». Désactiver le mode avion et rouvrir l'app : la soumission apparaît comme facture « Signée (hors ligne) ».
+- [ ] **Signature à distance hors ligne** : envoyer une soumission par SMS à ton numéro, ouvrir le lien une fois, passer en mode avion, signer. La page affiche « Signature enregistrée sur votre téléphone ». Désactiver le mode avion et rouvrir le lien : « Soumission signée. Merci. », et la facture apparaît dans l'app de l'artisan.
 - [ ] **Déconnexion** : Réglages → « Se déconnecter ». On revient sur `/login`.
 
 ---

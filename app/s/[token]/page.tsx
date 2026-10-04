@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CircleCheck, FileDown } from "lucide-react";
 import { QuoteSummary } from "@/components/quote/quote-summary";
-import { SignatureForm } from "@/components/signature/signature-form";
+import { OutboxSync } from "@/components/outbox-sync";
+import { RemoteSignature } from "@/components/signature/remote-signature";
 import { getInvoiceByToken } from "@/lib/data";
 import { formatCents } from "@/lib/format";
-import { signRemote } from "./actions";
 
 // Page publique (lien reçu par SMS) : pas d'indexation.
 export const metadata: Metadata = { title: "Votre soumission", robots: { index: false, follow: false } };
@@ -32,13 +32,16 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
         </a>
       </header>
 
+      {/* Garde cette page (et ses JS / CSS) sur le téléphone du client, et envoie une signature en attente. */}
+      <OutboxSync warmUrls={[`/s/${token}`]} />
+
       {invoice.status === "sent" && (
         <>
           <QuoteSummary invoice={invoice} />
           <p className="px-4 pb-3 text-[14px] text-muted">
             Acceptation. En signant, vous acceptez cette soumission d'un montant total de {formatCents(invoice.total_cents)}.
           </p>
-          <SignatureForm action={signRemote} fields={{ token }} />
+          <RemoteSignature token={token} />
         </>
       )}
 
