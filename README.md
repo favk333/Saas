@@ -1,6 +1,6 @@
 # Chantier
 
-PWA mobile pour artisans : devis → signature sur place → facture → paiement par SMS → relances automatiques.
+PWA mobile pour artisans du Québec : soumission → signature sur place → facture → paiement par SMS → relances automatiques.
 
 Stack : Next.js (App Router) · Tailwind CSS v4 · Supabase · Stripe · Twilio.
 
@@ -24,19 +24,19 @@ Supabase : appliquer la migration, puis dans *Authentication → URL Configurati
 app/
   layout.tsx                     ✓ racine, viewport mobile, safe areas
   globals.css                    ✓ tokens couleurs (6 couleurs, pas de dégradé)
-  manifest.ts                    ✓ manifeste PWA (icônes PNG, raccourci « Nouveau devis »)
+  manifest.ts                    ✓ manifeste PWA (icônes PNG, raccourci « Nouvelle soumission »)
   icon.svg                       ✓ favicon
   (app)/                         écrans authentifiés
     layout.tsx                   ✓ bandeau « Hors ligne »
     error.tsx                    ✓ écran de secours (réseau coupé)
     page.tsx                     ✓ Dashboard
     actions.ts                   ✓ relance SMS manuelle
-    devis/nouveau/page.tsx       ✓ création devis
-    devis/nouveau/actions.ts     ✓ enregistrement + envoi SMS
-    devis/[id]/page.tsx          ✓ détail devis / facture + lien de paiement
-    devis/[id]/signer/page.tsx   ✓ signature tactile sur place
-    devis/[id]/pdf/route.ts      ✓ PDF devis / facture (artisan connecté)
-    devis/[id]/actions.ts        ✓ signer, générer / envoyer le lien
+    soumissions/nouveau/page.tsx     ✓ création d'une soumission
+    soumissions/nouveau/actions.ts   ✓ enregistrement + envoi SMS
+    soumissions/[id]/page.tsx        ✓ détail soumission / facture + lien de paiement
+    soumissions/[id]/signer/page.tsx ✓ signature tactile sur place
+    soumissions/[id]/pdf/route.ts    ✓ PDF soumission / facture (artisan connecté)
+    soumissions/[id]/actions.ts      ✓ signer, générer / envoyer le lien
     reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, déconnexion
     reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
   (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
@@ -49,7 +49,7 @@ app/
     stripe/connect/route.ts      ✓ retour / relance de l'onboarding Stripe
 components/
   dashboard/                     ✓ invoice-row, status-badge, remind-button
-  quote/quote-form.tsx           ✓ formulaire devis (totaux en direct)
+  quote/quote-form.tsx           ✓ formulaire de soumission (totaux en direct)
   quote/quote-summary.tsx        ✓ récapitulatif lignes + totaux
   invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
   signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
@@ -85,6 +85,7 @@ supabase/
   migrations/0004_legal_mentions.sql ✓ assurance (et n° TVA, remplacé en 0005)
   migrations/0005_quebec_taxes.sql   ✓ CAD, TPS 5 % + TVQ 9,975 %, n° d'inscription TPS / TVQ
   migrations/0006_quebec_identifiers.sql ✓ NEQ (remplace le SIRET), licence RBQ
+  migrations/0007_soumissions.sql        ✓ numérotation S-AAAA-0001 (au lieu de D-…)
 ```
 
 ## Base de données
@@ -92,7 +93,8 @@ supabase/
 - Montants en **cents** (`integer`), en **dollars canadiens** (`currency = 'cad'`).
 - Taxes du Québec selon `tax_regime` : `qc` → **TPS 5 %** et **TVQ 9,975 %**, toutes deux calculées sur le sous-total (pas de taxe sur taxe) et arrondies au cent séparément ; `exempt` → petit fournisseur non inscrit, aucune taxe. `tps_cents`, `tvq_cents`, `tax_cents` et `total_cents` sont des colonnes générées ; `lib/quote.ts` reproduit le même calcul en entiers pour l'aperçu.
 - `subtotal_cents` recalculé par trigger à chaque modification de ligne ; `tax_cents` et `total_cents` sont des colonnes générées.
-- Un devis et sa facture sont **la même ligne** `invoices` : passer `status` à `signed` attribue le numéro de facture (`F-AAAA-0001`, séquence continue par artisan), `signed_at` et l'échéance (J+7).
+- Une soumission et sa facture sont **la même ligne** `invoices`. À la création, la soumission reçoit son numéro (`S-AAAA-0001`). Passer `status` à `signed` attribue le numéro de facture (`F-AAAA-0001`, séquence continue par artisan), `signed_at` et l'échéance (J+7).
+- Le code garde des noms anglais (`quote_number`, `createQuote`…) ; seuls les textes affichés disent « soumission ».
 - « En retard » n'est pas stocké : dérivé de `due_at` côté app.
 - RLS : chaque artisan ne voit que ses lignes. La page publique de signature et le cron utilisent la service role key côté serveur.
 
@@ -107,7 +109,7 @@ Appliquer : `supabase db push` ou coller le fichier dans le SQL Editor.
   - Si la facture n'a pas encore de lien de paiement, il est créé.
 - **Webhook Stripe** `POST /api/webhooks/stripe` : événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`. La facture passe en `paid`, ce qui arrête les relances.
   - Dans Stripe : un endpoint « compte » (`STRIPE_WEBHOOK_SECRET`) et, avec Connect, un endpoint « comptes connectés » (`STRIPE_CONNECT_WEBHOOK_SECRET`), tous deux vers la même URL.
-- **Relance manuelle** (bouton de l'accueil) : devis envoyé → lien de signature ; facture signée → lien de paiement. Une fois par heure maximum.
+- **Relance manuelle** (bouton de l'accueil) : soumission envoyée → lien de signature ; facture signée → lien de paiement. Une fois par heure maximum.
 
 Test manuel du cron :
 
@@ -128,11 +130,11 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 
 ## PDF
 
-- `/devis/[id]/pdf` pour l'artisan connecté et `/s/[token]/pdf` pour le client. Les brouillons ne sont jamais exposés par le lien public.
-- Le PDF est un **devis** avant signature (validité 30 jours) et une **facture** après.
+- `/soumissions/[id]/pdf` pour l'artisan connecté et `/s/[token]/pdf` pour le client. Les brouillons ne sont jamais exposés par le lien public.
+- Le PDF est une **soumission** avant signature (validité 30 jours) et une **facture** après.
 - Mentions imprimées :
   - vendeur : nom, adresse, téléphone, NEQ, licence RBQ, n° de TPS et de TVQ ;
-  - numéros et dates (émission, devis d'origine, échéance) ;
+  - numéros et dates (émission, soumission d'origine, échéance) ;
   - sous-total, TPS (5 %), TVQ (9,975 %) et total, ou « Taxes non applicables » pour un petit fournisseur non inscrit ;
   - échéance ;
   - assurance ;
@@ -147,6 +149,6 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
   - jamais en cache : `/api`, `/auth`, `/login`, `/s/…`, les PDF, les envois de formulaires.
 - **Déconnexion** : les pages en cache, qui contiennent les données de l'artisan, sont effacées.
 - **Formulaires** : hors ligne ou coupure en cours d'envoi, un message s'affiche et la saisie reste à l'écran (`lib/network.ts`).
-- **Brouillon de devis** : enregistré sur le téléphone à chaque frappe, restauré à la réouverture, effacé après un envoi réussi.
+- **Brouillon de soumission** : enregistré sur le téléphone à chaque frappe, restauré à la réouverture, effacé après un envoi réussi.
 - **Nouvelle version** : changer `VERSION` dans `sw.js` vide l'ancien cache des fichiers statiques.
 - Pas de file d'attente hors ligne : créer, signer ou relancer demande du réseau.

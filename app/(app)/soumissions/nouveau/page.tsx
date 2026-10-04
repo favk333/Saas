@@ -12,7 +12,7 @@ export default async function NewQuotePage() {
         <Link href="/" aria-label="Retour" className="flex h-12 w-12 items-center justify-center active:bg-canvas rounded-md">
           <ChevronLeft size={24} strokeWidth={1.75} aria-hidden />
         </Link>
-        <h1 className="text-[17px] font-semibold">Nouveau devis</h1>
+        <h1 className="text-[17px] font-semibold">Nouvelle soumission</h1>
       </header>
       <QuoteForm defaultTaxRegime={defaultTaxRegime} />
     </div>

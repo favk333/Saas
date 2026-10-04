@@ -8,7 +8,7 @@ import { formatCents } from "@/lib/format";
 import { signRemote } from "./actions";
 
 // Page publique (lien reçu par SMS) : pas d'indexation.
-export const metadata: Metadata = { title: "Votre devis", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Votre soumission", robots: { index: false, follow: false } };
 
 export default async function RemoteSignPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -16,7 +16,7 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
   if (!found || found.invoice.status === "draft") notFound();
   const { invoice, companyName } = found;
 
-  const number = invoice.invoice_number ? `Facture ${invoice.invoice_number}` : `Devis ${invoice.quote_number}`;
+  const number = invoice.invoice_number ? `Facture ${invoice.invoice_number}` : `Soumission ${invoice.quote_number}`;
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-white pb-[calc(100px+env(safe-area-inset-bottom))]">
@@ -36,7 +36,7 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
         <>
           <QuoteSummary invoice={invoice} />
           <p className="px-4 pb-3 text-[14px] text-muted">
-            Acceptation. En signant, vous acceptez ce devis d'un montant total de {formatCents(invoice.total_cents)}.
+            Acceptation. En signant, vous acceptez cette soumission d'un montant total de {formatCents(invoice.total_cents)}.
           </p>
           <SignatureForm action={signRemote} fields={{ token }} />
         </>
@@ -44,7 +44,7 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
 
       {invoice.status === "signed" && (
         <>
-          <Done title="Devis signé. Merci." />
+          <Done title="Soumission signée. Merci." />
           <QuoteSummary invoice={invoice} />
           <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
             <div className="mx-auto max-w-lg">

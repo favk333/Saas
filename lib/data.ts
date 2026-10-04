@@ -44,7 +44,7 @@ function sortLines(inv: InvoiceDetail) {
   return inv;
 }
 
-/** Devis/facture de l'artisan connecté (RLS). */
+/** Soumission ou facture de l'artisan connecté (RLS). */
 export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
   if (!isSupabaseConfigured) return demoDetail((i) => i.id === id);
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
@@ -114,11 +114,11 @@ const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOStri
 
 // Montants définis hors taxes ; TPS / TVQ / total calculés comme en base.
 const DEMO = [
-  { id: "1", status: "signed", quote_number: "D-2026-0042", invoice_number: "F-2026-0031", subtotal: 160_000, sent_at: ago(12), signed_at: ago(11), due_at: ago(4), paid_at: null, reminders_sent: 2, client: { name: "Mme Lefebvre", phone: "+15145551201" } },
-  { id: "2", status: "signed", quote_number: "D-2026-0045", invoice_number: "F-2026-0033", subtotal: 54_250, sent_at: ago(3), signed_at: ago(2), due_at: ago(-5), paid_at: null, reminders_sent: 0, client: { name: "Syndicat Les Érables", phone: "+14385551202" } },
-  { id: "3", status: "sent", quote_number: "D-2026-0047", invoice_number: null, subtotal: 300_800, sent_at: ago(1), signed_at: null, due_at: null, paid_at: null, reminders_sent: 0, client: { name: "M. Gagnon", phone: "+14505551203" } },
-  { id: "4", status: "paid", quote_number: "D-2026-0040", invoice_number: "F-2026-0029", subtotal: 85_200, sent_at: ago(9), signed_at: ago(9), due_at: ago(2), paid_at: ago(6), reminders_sent: 0, client: { name: "M. Roy", phone: "+15145551204" } },
-  { id: "5", status: "paid", quote_number: "D-2026-0038", invoice_number: "F-2026-0027", subtotal: 187_400, sent_at: ago(20), signed_at: ago(19), due_at: ago(12), paid_at: ago(15), reminders_sent: 1, client: { name: "Boulangerie Côté", phone: "+18195551205" } },
+  { id: "1", status: "signed", quote_number: "S-2026-0042", invoice_number: "F-2026-0031", subtotal: 160_000, sent_at: ago(12), signed_at: ago(11), due_at: ago(4), paid_at: null, reminders_sent: 2, client: { name: "Mme Lefebvre", phone: "+15145551201" } },
+  { id: "2", status: "signed", quote_number: "S-2026-0045", invoice_number: "F-2026-0033", subtotal: 54_250, sent_at: ago(3), signed_at: ago(2), due_at: ago(-5), paid_at: null, reminders_sent: 0, client: { name: "Syndicat Les Érables", phone: "+14385551202" } },
+  { id: "3", status: "sent", quote_number: "S-2026-0047", invoice_number: null, subtotal: 300_800, sent_at: ago(1), signed_at: null, due_at: null, paid_at: null, reminders_sent: 0, client: { name: "M. Gagnon", phone: "+14505551203" } },
+  { id: "4", status: "paid", quote_number: "S-2026-0040", invoice_number: "F-2026-0029", subtotal: 85_200, sent_at: ago(9), signed_at: ago(9), due_at: ago(2), paid_at: ago(6), reminders_sent: 0, client: { name: "M. Roy", phone: "+15145551204" } },
+  { id: "5", status: "paid", quote_number: "S-2026-0038", invoice_number: "F-2026-0027", subtotal: 187_400, sent_at: ago(20), signed_at: ago(19), due_at: ago(12), paid_at: ago(15), reminders_sent: 1, client: { name: "Boulangerie Côté", phone: "+18195551205" } },
 ] as const;
 
 function demoDetails(): InvoiceDetail[] {

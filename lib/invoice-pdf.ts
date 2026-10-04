@@ -15,7 +15,7 @@ const DEMO_SELLER: Seller = {
 };
 
 /**
- * PDF d'un devis/facture. `supabase` : client artisan (RLS) ou admin (lien public).
+ * PDF d'une soumission ou d'une facture. `supabase` : client artisan (RLS) ou admin (lien public).
  * Sans client (mode démo), utilise un vendeur fictif et pas de signature.
  */
 export async function invoicePdfResponse(invoice: InvoiceDetail, supabase: SupabaseClient | null) {

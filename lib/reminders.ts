@@ -34,5 +34,5 @@ export function reminderSms(step: number, { company, number, totalCents, url }: 
 }
 
 export function signatureReminderSms({ company, number, totalCents, url }: SmsInput) {
-  return `Bonjour, votre devis ${number}${from(company)} (${formatCents(totalCents)}) attend votre signature : ${url}`;
+  return `Bonjour, votre soumission ${number}${from(company)} (${formatCents(totalCents)}) attend votre signature : ${url}`;
 }

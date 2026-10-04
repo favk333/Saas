@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Check, CreditCard, PenLine, Send, Share } from "lucide-react";
-import { generatePaymentLink, sendPaymentLinkSms, type ActionState } from "@/app/(app)/devis/[id]/actions";
+import { generatePaymentLink, sendPaymentLinkSms, type ActionState } from "@/app/(app)/soumissions/[id]/actions";
 import { withNetworkGuard } from "@/lib/network";
 import type { DisplayStatus } from "@/lib/types";
 
@@ -40,7 +40,7 @@ export function InvoiceActions({ id, status, paymentUrl }: { id: string; status:
         {error && <p role="alert" className="text-[14px] text-late">{error}</p>}
 
         {(status === "draft" || status === "sent") && (
-          <Link href={`/devis/${id}/signer`} className={primary}>
+          <Link href={`/soumissions/${id}/signer`} className={primary}>
             <PenLine size={20} strokeWidth={1.75} aria-hidden />
             Faire signer sur place
           </Link>

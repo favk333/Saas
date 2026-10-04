@@ -14,7 +14,7 @@ const HOUR = 3_600_000;
 
 /**
  * Relance manuelle depuis l'accueil :
- * devis envoyé → lien de signature ; facture signée → lien de paiement.
+ * soumission envoyée → lien de signature ; facture signée → lien de paiement.
  * Ne touche pas au compteur des relances automatiques (J+3 / J+7).
  */
 export async function remindBySms(_prev: RemindState, formData: FormData): Promise<RemindState> {

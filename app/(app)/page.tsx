@@ -42,7 +42,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <nav className="mt-2 grid grid-cols-2 px-4" aria-label="Filtrer">
           <TabLink href="/" active={tab === "pending"} label="En attente de paiement" count={pending.length} />
-          <TabLink href="/?tab=paid" active={tab === "paid"} label="Payés" count={paid.length} />
+          <TabLink href="/?tab=paid" active={tab === "paid"} label="Payées" count={paid.length} />
         </nav>
       </header>
 
@@ -64,11 +64,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-lg">
           <Link
-            href="/devis/nouveau"
+            href="/soumissions/nouveau"
             className="flex h-13 w-full items-center justify-center gap-2 rounded-md bg-ink text-[16px] font-medium text-white active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             <Plus size={20} strokeWidth={2} aria-hidden />
-            Nouveau devis
+            Nouvelle soumission
           </Link>
         </div>
       </div>

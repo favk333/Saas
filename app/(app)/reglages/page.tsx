@@ -29,7 +29,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
       {welcome && (
         <p className="border-b border-line px-4 py-4 text-[15px] text-muted">
-          Renseignez votre entreprise. Elle apparaît sur vos devis et dans les SMS envoyés à vos clients.
+          Renseignez votre entreprise. Elle apparaît sur vos soumissions, vos factures et dans les SMS envoyés à vos clients.
         </p>
       )}
 

@@ -57,7 +57,7 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
 
       <Section title="Entreprise">
         <div>
-          <label htmlFor="companyName" className={label}>Nom affiché sur les devis et SMS</label>
+          <label htmlFor="companyName" className={label}>Nom affiché sur les soumissions, factures et SMS</label>
           <input {...field("companyName")} className={input} autoComplete="organization" required />
         </div>
         <div>

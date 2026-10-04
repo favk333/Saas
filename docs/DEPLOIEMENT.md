@@ -20,13 +20,13 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 ## 1. Supabase : base de données
 
 - [ ] Créer le projet dans la région **Canada (Central, `ca-central-1`)**. Les données des clients (téléphones, signatures, IP) restent ainsi au Canada (Loi 25).
-- [ ] Appliquer les 6 migrations **dans l'ordre**, avec l'une des deux méthodes :
+- [ ] Appliquer les 7 migrations **dans l'ordre**, avec l'une des deux méthodes :
   - CLI :
     ```bash
     supabase link --project-ref <ref>
     supabase db push
     ```
-  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, puis `0006_quebec_identifiers.sql`.
+  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, `0005_quebec_taxes.sql`, `0006_quebec_identifiers.sql`, puis `0007_soumissions.sql`.
 - [ ] Vérifier :
   - **Table Editor** : les tables `profiles`, `clients`, `invoices` et `line_items` existent, chacune avec l'icône RLS activée.
   - **Storage** : le bucket `signatures` existe et est **privé**.
@@ -130,11 +130,11 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 - [ ] **Profil** : nom, adresse, NEQ, licence RBQ, n° de TPS (`123456789 RT0001`) et de TVQ (`1234567890 TQ0001`), assurance, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
 - [ ] **Stripe Connect** : Réglages → « Activer les paiements ». Remplir le formulaire Stripe avec les données de test (Stripe propose « Use test data »). Au retour, on doit lire « Activés » et le bandeau disparaît.
   - Si le statut reste « incomplet », vérifier dans Stripe que le webhook 2 reçoit bien `account.updated`.
-- [ ] **Devis par SMS** : un devis vers **ton** numéro, puis « Envoyer par SMS ». Le SMS doit arriver avec un lien `https://<domaine>/s/…`.
-- [ ] **Signature à distance** : ouvrir le lien, signer. Le message « Devis signé » s'affiche avec un bouton vert « Payer ».
-- [ ] **Paiement** : carte `4242 4242 4242 4242`, n'importe quelle date future, n'importe quel CVC. La facture doit passer en « Payé » dans l'onglet « Payés » de l'accueil.
+- [ ] **Soumission par SMS** : une soumission vers **ton** numéro, puis « Envoyer par SMS ». Le SMS doit arriver avec un lien `https://<domaine>/s/…`.
+- [ ] **Signature à distance** : ouvrir le lien, signer. Le message « Soumission signée » s'affiche avec un bouton vert « Payer ».
+- [ ] **Paiement** : carte `4242 4242 4242 4242`, n'importe quelle date future, n'importe quel CVC. La facture doit passer en « Payée » dans l'onglet « Payées » de l'accueil.
   - Sinon, voir **Stripe → Webhooks → webhook 2 → tentatives** : un code 400 signale un mauvais secret, un code 500 une erreur base de données.
-- [ ] **Signature sur place** : un devis → « Faire signer sur place » → signer au doigt. La facture `F-AAAA-0001` s'affiche → « Générer le lien de paiement » → « Envoyer le lien par SMS ».
+- [ ] **Signature sur place** : une soumission → « Faire signer sur place » → signer au doigt. La facture `F-AAAA-0001` s'affiche → « Générer le lien de paiement » → « Envoyer le lien par SMS ».
 - [ ] **PDF** : l'icône en haut de la facture ouvre un PDF avec les mentions et la signature. Le bouton « PDF » de la page client fonctionne aussi.
 - [ ] **Relance manuelle** : « Relancer par SMS » sur l'accueil. Le bouton affiche « Relance envoyée » et le SMS arrive.
 - [ ] **Cron** : le déclencher à la main.
@@ -180,7 +180,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
   - mentions légales et CGU du service ;
   - politique de confidentialité conforme à la **Loi 25** (Québec) et à la LPRPDE : l'app stocke les noms, téléphones, adresses, signatures et IP des clients des artisans ;
   - désigner un responsable de la protection des renseignements personnels, et encadrer par contrat le traitement des données des clients des artisans ;
-  - faire valider les mentions du PDF (NEQ, licence RBQ, n° de TPS / TVQ, « Devis valable 30 jours ») au regard de la Loi sur le bâtiment et de la Loi sur la protection du consommateur.
+  - faire valider les mentions du PDF (NEQ, licence RBQ, n° de TPS / TVQ, « Soumission valable 30 jours ») au regard de la Loi sur le bâtiment et de la Loi sur la protection du consommateur.
 
 ---
 

@@ -13,9 +13,9 @@ export function decodeSignature(value: FormDataEntryValue | null): Buffer | null
 }
 
 /**
- * Enregistre la signature et passe le devis en "signed".
+ * Enregistre la signature et passe la soumission en "signed".
  * Le trigger SQL attribue alors le numéro de facture et l'échéance.
- * Renvoie false si le devis n'était plus signable (déjà signé, annulé…).
+ * Renvoie false si la soumission n'était plus signable (déjà signée, annulée…).
  */
 export async function recordSignature(
   supabase: SupabaseClient,

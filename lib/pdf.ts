@@ -36,7 +36,7 @@ const phone = (e164: string) =>
     : e164.replace(/^\+33/, "0").replace(/(\d{2})(?=\d)/g, "$1 ");
 
 /**
- * Devis (avant signature) ou facture (après), avec les mentions obligatoires :
+ * Soumission (avant signature) ou facture (après), avec les mentions obligatoires :
  * identité du vendeur et numéros de TPS / TVQ, numéro, dates, sous-total,
  * TPS et TVQ ligne par ligne, total, échéance, assurance, signature du client.
  */
@@ -45,7 +45,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const isInvoice = Boolean(invoice.invoice_number);
-  const title = isInvoice ? `Facture ${invoice.invoice_number}` : `Devis ${invoice.quote_number}`;
+  const title = isInvoice ? `Facture ${invoice.invoice_number}` : `Soumission ${invoice.quote_number}`;
   doc.setTitle(title);
   doc.setAuthor(seller.company_name);
   doc.setCreator("Chantier");
@@ -106,7 +106,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   ].filter(Boolean) as string[];
   const docLines: [string, string][] = [
     [isInvoice ? "Date d'émission" : "Date", date(invoice.signed_at ?? invoice.created_at)],
-    ...(isInvoice ? [["Devis", invoice.quote_number] as [string, string]] : []),
+    ...(isInvoice ? [["Soumission", invoice.quote_number] as [string, string]] : []),
     ...(isInvoice && invoice.due_at ? [["Échéance", date(invoice.due_at)] as [string, string]] : []),
     ...(!isInvoice ? [["Validité", "30 jours"] as [string, string]] : []),
   ];
@@ -186,7 +186,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
     if (invoice.paid_at) terms.push(`Facture acquittée le ${date(invoice.paid_at)}.`);
     else if (invoice.due_at) terms.push(`Paiement à réception, au plus tard le ${date(invoice.due_at)}.`);
   } else {
-    terms.push("Devis valable 30 jours. Les travaux débutent après acceptation signée.");
+    terms.push("Soumission valable 30 jours. Les travaux débutent après acceptation signée.");
   }
   if (seller.insurance) terms.push(`Assurance : ${seller.insurance}.`);
 
@@ -208,7 +208,7 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
     text("ACCEPTATION DU CLIENT", M, y, { size: 8, color: MUTED });
     y -= 13;
     const how = invoice.signed_via === "remote" ? "en ligne" : "sur place";
-    text(`Signé ${how} par ${invoice.client.name} le ${date(invoice.signed_at)}`, M, y);
+    text(`Signée ${how} par ${invoice.client.name} le ${date(invoice.signed_at)}`, M, y);
     if (signaturePng) {
       const img = await doc.embedPng(signaturePng);
       const scale = Math.min(180 / img.width, 60 / img.height);
@@ -230,5 +230,5 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
 }
 
 export function pdfFilename(invoice: Pick<InvoiceDetail, "invoice_number" | "quote_number">) {
-  return invoice.invoice_number ? `Facture-${invoice.invoice_number}.pdf` : `Devis-${invoice.quote_number}.pdf`;
+  return invoice.invoice_number ? `Facture-${invoice.invoice_number}.pdf` : `Soumission-${invoice.quote_number}.pdf`;
 }

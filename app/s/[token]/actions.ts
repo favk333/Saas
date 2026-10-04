@@ -15,12 +15,12 @@ export async function signRemote(_prev: SignatureState, formData: FormData): Pro
   if (!isSupabaseConfigured) return { error: "Démonstration : signature non enregistrée." };
 
   const found = await getInvoiceByToken(token);
-  if (!found || found.invoice.status !== "sent") return { error: "Ce devis n'est plus signable." };
+  if (!found || found.invoice.status !== "sent") return { error: "Cette soumission n'est plus signable." };
 
   const admin = createAdminClient();
   try {
     const ok = await recordSignature(admin, found.invoice, png, "remote", ["sent"]);
-    if (!ok) return { error: "Ce devis n'est plus signable." };
+    if (!ok) return { error: "Cette soumission n'est plus signable." };
   } catch {
     return { error: "Enregistrement impossible. Réessayez." };
   }

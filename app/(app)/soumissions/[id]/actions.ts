@@ -27,11 +27,11 @@ export async function signOnSite(_prev: SignatureState, formData: FormData): Pro
 
   try {
     const ok = await recordSignature(supabase, { id, user_id: userId }, png, "on_site", ["draft", "sent"]);
-    if (!ok) return { error: "Ce devis n'est plus signable." };
+    if (!ok) return { error: "Cette soumission n'est plus signable." };
   } catch {
     return { error: "Enregistrement de la signature impossible. Réessayez." };
   }
-  redirect(`/devis/${id}`);
+  redirect(`/soumissions/${id}`);
 }
 
 export async function generatePaymentLink(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -43,7 +43,7 @@ export async function generatePaymentLink(_prev: ActionState, formData: FormData
     if (e instanceof PaymentsNotEnabledError) return { error: "Activez d'abord les paiements dans Réglages." };
     return { error: "Création du lien impossible. Réessayez." };
   }
-  revalidatePath(`/devis/${id}`);
+  revalidatePath(`/soumissions/${id}`);
   return { error: null };
 }
 

@@ -49,7 +49,7 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
     .insert({ user_id: userId, client_id: client.id, site_address: siteAddress, tax_regime: taxRegime })
     .select("id, sign_token, quote_number")
     .single();
-  if (invoiceError) return { error: "Enregistrement du devis impossible." };
+  if (invoiceError) return { error: "Enregistrement de la soumission impossible." };
 
   const { error: itemsError } = await supabase.from("line_items").insert(
     items.map((it, position) => ({
@@ -69,7 +69,7 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
     const { total } = computeTotals(items.map((it) => it.cents!), taxRegime);
     const link = `${process.env.NEXT_PUBLIC_APP_URL}/s/${invoice.sign_token}`;
     try {
-      await sendSms(phone, `Bonjour, voici votre devis ${invoice.quote_number} (${formatCents(total)}). Consultez-le et signez ici : ${link}`);
+      await sendSms(phone, `Bonjour, voici votre soumission ${invoice.quote_number} (${formatCents(total)}). Consultez-la et signez ici : ${link}`);
     } catch {
       // Rien n'est conservé : un nouvel essai ne crée pas de doublon.
       await supabase.from("invoices").delete().eq("id", invoice.id);
@@ -79,5 +79,5 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
     redirect("/");
   }
 
-  redirect(`/devis/${invoice.id}/signer`);
+  redirect(`/soumissions/${invoice.id}/signer`);
 }

@@ -25,10 +25,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           <ChevronLeft size={24} strokeWidth={1.75} aria-hidden />
         </Link>
         <h1 className="flex-1 truncate text-[17px] font-semibold tabular-nums">
-          {isInvoice ? `Facture ${invoice.invoice_number}` : `Devis ${invoice.quote_number}`}
+          {isInvoice ? `Facture ${invoice.invoice_number}` : `Soumission ${invoice.quote_number}`}
         </h1>
         <StatusBadge status={status} />
-        <a href={`/devis/${invoice.id}/pdf`} target="_blank" aria-label="Télécharger le PDF"
+        <a href={`/soumissions/${invoice.id}/pdf`} target="_blank" aria-label="Télécharger le PDF"
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md active:bg-canvas">
           <FileDown size={22} strokeWidth={1.75} aria-hidden />
         </a>
@@ -37,10 +37,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       <QuoteSummary invoice={invoice} />
 
       <dl className="space-y-1 border-t border-line px-4 py-4 text-[14px] text-muted">
-        {isInvoice && <div className="flex justify-between"><dt>Devis</dt><dd className="tabular-nums">{invoice.quote_number}</dd></div>}
-        {invoice.signed_at && <div className="flex justify-between"><dt>Signé</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
+        {isInvoice && <div className="flex justify-between"><dt>Soumission</dt><dd className="tabular-nums">{invoice.quote_number}</dd></div>}
+        {invoice.signed_at && <div className="flex justify-between"><dt>Signée</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
         {invoice.due_at && !invoice.paid_at && <div className="flex justify-between"><dt>Échéance</dt><dd>{dateTime(invoice.due_at)}</dd></div>}
-        {invoice.paid_at && <div className="flex justify-between text-paid"><dt>Payé</dt><dd>{dateTime(invoice.paid_at)}</dd></div>}
+        {invoice.paid_at && <div className="flex justify-between text-paid"><dt>Payée</dt><dd>{dateTime(invoice.paid_at)}</dd></div>}
       </dl>
 
       <InvoiceActions id={invoice.id} status={status} paymentUrl={invoice.stripe_payment_link_url} />

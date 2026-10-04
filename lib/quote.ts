@@ -1,4 +1,4 @@
-// Règles du devis, partagées client (aperçu) / serveur (validation).
+// Règles de la soumission, partagées client (aperçu) / serveur (validation).
 // Les arrondis reproduisent ceux de la base (supabase/migrations/0005_quebec_taxes.sql).
 
 export type TaxRegime = "qc" | "exempt";

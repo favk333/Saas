@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { PenLine, Plus, Send, X } from "lucide-react";
-import { createQuote, type QuoteFormState } from "@/app/(app)/devis/nouveau/actions";
+import { createQuote, type QuoteFormState } from "@/app/(app)/soumissions/nouveau/actions";
 import { formatCents } from "@/lib/format";
 import { withNetworkGuard } from "@/lib/network";
 import { computeTotals, isTaxRegime, parseAmount, TPS_LABEL, TVQ_LABEL, type TaxRegime } from "@/lib/quote";

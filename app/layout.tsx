@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Chantier",
-  description: "Devis, signature et paiement depuis le chantier.",
+  description: "Soumissions, signature et paiement depuis le chantier.",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Chantier" },
   icons: { apple: "/icons/apple-touch-icon.png" },
 };

@@ -2,10 +2,10 @@ import type { DisplayStatus } from "@/lib/types";
 
 const styles: Record<DisplayStatus, { label: string; className: string }> = {
   draft: { label: "Brouillon", className: "border-line text-muted" },
-  sent: { label: "Envoyé", className: "border-line text-ink" },
-  signed: { label: "Signé", className: "border-ink text-ink" },
+  sent: { label: "Envoyée", className: "border-line text-ink" },
+  signed: { label: "Signée", className: "border-ink text-ink" },
   late: { label: "En retard", className: "border-late text-late" },
-  paid: { label: "Payé", className: "border-paid text-paid" },
+  paid: { label: "Payée", className: "border-paid text-paid" },
 };
 
 export function StatusBadge({ status }: { status: DisplayStatus }) {
