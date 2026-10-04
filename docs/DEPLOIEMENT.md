@@ -171,7 +171,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
   - Remplacer `STRIPE_SECRET_KEY` (`sk_live_…`), `STRIPE_WEBHOOK_SECRET` et `STRIPE_CONNECT_WEBHOOK_SECRET`.
   - ⚠️ Les comptes Connect créés en mode test n'existent pas en live. Côté base, remettre à zéro `stripe_account_id` et `stripe_charges_enabled` des profils de test, ou repartir d'une base vide.
 - [ ] **Twilio** : passer le compte en payant et finaliser l'expéditeur (section 5).
-- [ ] **SMTP** configuré (section 2.4).
+- [ ] **SMTP** configuré (section 2).
 - [ ] Redéployer sur Vercel.
 - [ ] Refaire rapidement le parcours de la section 6 avec un vrai paiement de 1 €, puis le rembourser dans Stripe.
 - [ ] **Juridique** (à valider avec un juriste ou un expert-comptable) :
