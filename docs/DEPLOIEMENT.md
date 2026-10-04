@@ -74,6 +74,8 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
   | `PLATFORM_FEE_FIXED_CENTS` | section 4, commission (facultatif) |
   | `PLATFORM_TPS_NUMBER` | section 4, si la plateforme est inscrite |
   | `PLATFORM_TVQ_NUMBER` | section 4, si la plateforme est inscrite |
+  | `PLATFORM_LEGAL_NAME` | nom légal imprimé sur les relevés de commissions |
+  | `PLATFORM_ADDRESS` | adresse imprimée sur les relevés de commissions |
   | `TWILIO_ACCOUNT_SID` | section 5 |
   | `TWILIO_AUTH_TOKEN` | section 5 |
   | `TWILIO_FROM_NUMBER` | section 5 |
@@ -161,6 +163,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 - [ ] **Hors ligne** : ouvrir l'accueil et une facture, passer en mode avion, rouvrir l'app. Les données s'affichent avec le bandeau « Hors ligne ».
 - [ ] **Signature hors ligne** : ouvrir l'app une fois en ligne, passer en mode avion, « Nouvelle soumission » → « Faire signer sur place » → signer. L'accueil affiche « En attente d'envoi ». Désactiver le mode avion et rouvrir l'app : la soumission apparaît comme facture « Signée (hors ligne) ».
 - [ ] **Signature à distance hors ligne** : envoyer une soumission par SMS à ton numéro, ouvrir le lien une fois, passer en mode avion, signer. La page affiche « Signature enregistrée sur votre téléphone ». Désactiver le mode avion et rouvrir le lien : « Soumission signée. Merci. », et la facture apparaît dans l'app de l'artisan.
+- [ ] **Relevé des commissions** : après un paiement de test, Réglages → « Relevés des commissions » → le mois en cours. Le PDF affiche le nom et l'adresse de la plateforme, ses n° de TPS / TVQ, le paiement et le détail de la commission.
 - [ ] **Déconnexion** : Réglages → « Se déconnecter ». On revient sur `/login`.
 
 ---

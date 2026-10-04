@@ -4,12 +4,14 @@ import { ChevronLeft } from "lucide-react";
 import { LogoutButton } from "@/components/settings/logout-button";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
-import { getCurrentUserId, getProfile } from "@/lib/data";
+import { StatementsSection } from "@/components/settings/statements-section";
+import { monthsOf } from "@/lib/commissions";
+import { getCommissionRows, getCurrentUserId, getProfile } from "@/lib/data";
 import { feeInfoSafe } from "@/lib/fees";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string }> }) {
   const { bienvenue, stripe } = await searchParams;
-  const [profile, userId] = await Promise.all([getProfile(), getCurrentUserId()]);
+  const [profile, userId, commissionRows] = await Promise.all([getProfile(), getCurrentUserId(), getCommissionRows()]);
   if (!profile || !userId) redirect("/login");
   const welcome = Boolean(bienvenue) || !profile.company_name;
 
@@ -39,6 +41,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       {!welcome && (
         <>
           <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} fee={feeInfoSafe()} />
+          <StatementsSection months={monthsOf(commissionRows)} />
           <Section title="Compte">
             {profile.email && <p className="text-[15px]">{profile.email}</p>}
             <LogoutButton userId={userId} />

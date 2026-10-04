@@ -39,6 +39,7 @@ app/
     soumissions/[id]/actions.ts      ✓ signer, générer / envoyer le lien
     reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, déconnexion
     reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
+    reglages/releves/[mois]/pdf  ✓ relevé mensuel des commissions (PDF)
   (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
   auth/callback/route.ts         ✓ retour du lien magique
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
@@ -75,6 +76,8 @@ lib/
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
   fees.ts                        ✓ commission de la plateforme (PLATFORM_FEE_BPS / _FIXED_CENTS)
+  commissions.ts                 ✓ relevés : regroupement par mois (heure de Montréal), totaux
+  statement-pdf.ts               ✓ rendu PDF du relevé des commissions
   connect.ts                     ✓ création du compte Connect, onboarding, synchro statut
   pdf.ts                         ✓ rendu PDF (pdf-lib, Helvetica, A4, pagination)
   invoice-pdf.ts                 ✓ données vendeur + signature → réponse PDF
@@ -145,6 +148,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
 - Enregistrée sur la facture (`platform_fee_cents`), affichée à l'artisan sur la facture, et le taux dans Réglages.
 - Fixée au moment où le lien est créé : changer le taux n'affecte pas les liens déjà envoyés.
 - **TPS et TVQ sur la commission** : si `PLATFORM_TPS_NUMBER` et `PLATFORM_TVQ_NUMBER` sont définis (plateforme inscrite), TPS 5 % et TVQ 9,975 % sont calculées sur la commission, avec les mêmes arrondis que les soumissions. Stripe ne prend qu'un montant : `application_fee_amount` = commission + TPS + TVQ, plafonné au paiement. La facture enregistre le détail (`platform_fee_cents`, `platform_fee_tps_cents`, `platform_fee_tvq_cents`) et l'affiche à l'artisan avec les numéros de la plateforme, pour ses crédits de taxe (CTI / RTI). Un seul des deux numéros, ou un numéro mal formé : création du lien refusée et journalisée.
+- **Relevé mensuel des commissions** (Réglages → « Relevés des commissions », PDF) : paiements encaissés dans le mois à l'heure de Montréal, avec commission, TPS, TVQ et total prélevé par paiement, et les totaux du mois. En-tête : la plateforme (`PLATFORM_LEGAL_NAME`, `PLATFORM_ADDRESS`, n° de TPS / TVQ) et l'artisan (nom, adresse, NEQ, n° de TPS / TVQ), pour ses crédits de taxe. Les 24 derniers mois ; les factures payées sans commission n'y figurent pas.
 - Hypothèse : les artisans sont au Québec (TVQ applicable). Un artisan dans une autre province relèverait d'autres règles (TVH, TPS seule).
 
 ## PDF

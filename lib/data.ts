@@ -1,6 +1,7 @@
 import { createAdminClient } from "./supabase/admin";
 import { createClient, getUser, getUserId } from "./supabase/server";
 import { isSupabaseConfigured } from "./supabase/config";
+import type { CommissionRow } from "./commissions";
 import { platformFee } from "./fees";
 import { computeTotals, type TaxRegime } from "./quote";
 import { INVOICE_DETAIL_SELECT, type Invoice, type InvoiceDetail } from "./types";
@@ -139,7 +140,7 @@ function demoDetails(): InvoiceDetail[] {
       total_cents: t.total,
       sign_token: `demo${n}`,
       stripe_payment_link_url: inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
-      ...(inv.id === "1"
+      ...(inv.id === "1" || inv.status === "paid"
         ? (() => {
             const fee = platformFee(t.total, { bps: 100, fixedCents: 30, taxNumbers: { tps: "987654321RT0001", tvq: "9876543210TQ0001" } });
             return { platform_fee_cents: fee.base, platform_fee_tps_cents: fee.tps, platform_fee_tvq_cents: fee.tvq };
@@ -175,4 +176,32 @@ function demoDashboard() {
 export async function getCurrentUserId(): Promise<string | null> {
   if (!isSupabaseConfigured) return "demo";
   return getUserId(await createClient());
+}
+
+/** Paiements encaissés avec commission (24 derniers mois), pour les relevés mensuels. RLS : ceux de l'artisan. */
+export async function getCommissionRows(): Promise<CommissionRow[]> {
+  if (!isSupabaseConfigured) {
+    return demoDetails()
+      .filter((i) => i.status === "paid" && i.platform_fee_cents)
+      .map((i) => ({
+        invoice_number: i.invoice_number!,
+        paid_at: i.paid_at!,
+        total_cents: i.total_cents,
+        platform_fee_cents: i.platform_fee_cents!,
+        platform_fee_tps_cents: i.platform_fee_tps_cents,
+        platform_fee_tvq_cents: i.platform_fee_tvq_cents,
+      }));
+  }
+  const since = new Date(Date.now() - 731 * 86_400_000).toISOString();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("invoice_number, paid_at, total_cents, platform_fee_cents, platform_fee_tps_cents, platform_fee_tvq_cents")
+    .eq("status", "paid")
+    .not("platform_fee_cents", "is", null)
+    .gt("platform_fee_cents", 0)
+    .gte("paid_at", since)
+    .order("paid_at");
+  if (error) throw error;
+  return (data ?? []) as CommissionRow[];
 }
