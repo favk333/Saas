@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { QuoteForm } from "@/components/quote/quote-form";
-import { getDefaultTaxBps } from "@/lib/data";
+import { getDefaultTaxRegime } from "@/lib/data";
 
 export default async function NewQuotePage() {
-  const defaultTaxBps = await getDefaultTaxBps();
+  const defaultTaxRegime = await getDefaultTaxRegime();
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-white">
@@ -14,7 +14,7 @@ export default async function NewQuotePage() {
         </Link>
         <h1 className="text-[17px] font-semibold">Nouveau devis</h1>
       </header>
-      <QuoteForm defaultTaxBps={defaultTaxBps} />
+      <QuoteForm defaultTaxRegime={defaultTaxRegime} />
     </div>
   );
 }

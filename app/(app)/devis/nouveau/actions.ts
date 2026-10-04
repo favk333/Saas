@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { computeTotals, isTaxRate, normalizePhone, parseEuros } from "@/lib/quote";
+import { computeTotals, isTaxRegime, normalizePhone, parseAmount } from "@/lib/quote";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient, getUserId } from "@/lib/supabase/server";
 import { sendSms } from "@/lib/twilio";
@@ -14,7 +14,7 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
   const name = String(formData.get("clientName") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const siteAddress = String(formData.get("siteAddress") ?? "").trim() || null;
-  const taxBps = Number(formData.get("taxBps"));
+  const taxRegime = formData.get("taxRegime");
 
   const descriptions = formData.getAll("description").map((v) => String(v).trim());
   const prices = formData.getAll("price").map((v) => String(v));
@@ -22,11 +22,11 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
   const items = descriptions
     .map((description, i) => ({ description, price: (prices[i] ?? "").trim() }))
     .filter((it) => it.description || it.price)
-    .map((it) => ({ description: it.description, cents: parseEuros(it.price) }));
+    .map((it) => ({ description: it.description, cents: parseAmount(it.price) }));
 
   if (!name) return { error: "Nom du client manquant." };
   if (!phone) return { error: "Numéro de téléphone invalide." };
-  if (!isTaxRate(taxBps)) return { error: "Taux de TVA invalide." };
+  if (!isTaxRegime(taxRegime)) return { error: "Régime de taxes invalide." };
   if (items.length === 0) return { error: "Ajoutez au moins une ligne." };
   if (items.some((it) => !it.description)) return { error: "Une ligne n'a pas de description." };
   if (items.some((it) => it.cents === null)) return { error: "Un prix est invalide." };
@@ -46,7 +46,7 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
 
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
-    .insert({ user_id: userId, client_id: client.id, site_address: siteAddress, tax_bps: taxBps })
+    .insert({ user_id: userId, client_id: client.id, site_address: siteAddress, tax_regime: taxRegime })
     .select("id, sign_token, quote_number")
     .single();
   if (invoiceError) return { error: "Enregistrement du devis impossible." };
@@ -66,10 +66,10 @@ export async function createQuote(_prev: QuoteFormState, formData: FormData): Pr
   }
 
   if (intent === "sms") {
-    const { total } = computeTotals(items.map((it) => it.cents!), taxBps);
+    const { total } = computeTotals(items.map((it) => it.cents!), taxRegime);
     const link = `${process.env.NEXT_PUBLIC_APP_URL}/s/${invoice.sign_token}`;
     try {
-      await sendSms(phone, `Bonjour, voici votre devis ${invoice.quote_number} (${formatCents(total)} TTC). Consultez-le et signez ici : ${link}`);
+      await sendSms(phone, `Bonjour, voici votre devis ${invoice.quote_number} (${formatCents(total)}). Consultez-le et signez ici : ${link}`);
     } catch {
       // Rien n'est conservé : un nouvel essai ne crée pas de doublon.
       await supabase.from("invoices").delete().eq("id", invoice.id);

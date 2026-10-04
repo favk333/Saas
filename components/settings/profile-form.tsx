@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 import { saveProfile, type SettingsState } from "@/app/(app)/reglages/actions";
-import { TaxRatePicker } from "@/components/ui/tax-rate-picker";
+import { TaxRegimePicker } from "@/components/ui/tax-regime-picker";
 import type { Profile } from "@/lib/data";
 import { withNetworkGuard } from "@/lib/network";
 
@@ -13,11 +13,15 @@ const input =
   "h-12 w-full rounded-md border border-line bg-white px-3 text-[16px] outline-none placeholder:text-muted/60 focus:border-ink";
 const label = "mb-1 block text-[13px] text-muted";
 
-/** "+33611223344" → "06 11 22 33 44" pour l'affichage. */
+/** "+15145551234" → "514 555-1234", "+33611223344" → "06 11 22 33 44" pour l'affichage. */
 function displayPhone(e164: string | null) {
   if (!e164) return "";
-  return e164.startsWith("+33") ? ("0" + e164.slice(3)).replace(/(\d{2})(?=\d)/g, "$1 ") : e164;
+  if (/^\+1\d{10}$/.test(e164)) return e164.slice(2).replace(/^(\d{3})(\d{3})(\d{4})$/, "$1 $2-$3");
+  if (e164.startsWith("+33")) return ("0" + e164.slice(3)).replace(/(\d{2})(?=\d)/g, "$1 ");
+  return e164;
 }
+/** "123456789RT0001" → "123456789 RT0001" */
+const spaced = (n: string | null) => (n ?? "").replace(/^(\d+)([A-Z]{2}\d{4})$/, "$1 $2");
 
 export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: boolean }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(save, { error: null });
@@ -26,10 +30,11 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
     phone: displayPhone(profile.phone),
     siret: profile.siret ?? "",
     address: profile.address ?? "",
-    vatNumber: profile.vat_number ?? "",
+    tpsNumber: spaced(profile.tps_number),
+    tvqNumber: spaced(profile.tvq_number),
     insurance: profile.insurance ?? "",
   });
-  const [taxBps, setTaxBps] = useState(profile.default_tax_bps);
+  const [taxRegime, setTaxRegime] = useState(profile.default_tax_regime);
   const [dirty, setDirty] = useState(false);
 
   const field = (key: keyof typeof values) => ({
@@ -69,17 +74,22 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
 
       <Section title="Mentions légales">
         <div>
-          <label htmlFor="vatNumber" className={label}>N° TVA intracommunautaire</label>
-          <input {...field("vatNumber")} className={`${input} uppercase tabular-nums`} autoComplete="off" placeholder="Vide si TVA non applicable" />
+          <label htmlFor="tpsNumber" className={label}>N° de TPS</label>
+          <input {...field("tpsNumber")} className={`${input} uppercase tabular-nums`} autoComplete="off" placeholder="123456789 RT0001" />
         </div>
         <div>
-          <label htmlFor="insurance" className={label}>Assurance décennale</label>
-          <input {...field("insurance")} className={input} autoComplete="off" placeholder="Assureur, n° de contrat, zone couverte" />
+          <label htmlFor="tvqNumber" className={label}>N° de TVQ</label>
+          <input {...field("tvqNumber")} className={`${input} uppercase tabular-nums`} autoComplete="off" placeholder="1234567890 TQ0001" />
+        </div>
+        <div>
+          <label htmlFor="insurance" className={label}>Assurance</label>
+          <input {...field("insurance")} className={input} autoComplete="off" placeholder="Assureur, n° de police" />
         </div>
       </Section>
 
-      <Section title="TVA par défaut">
-        <TaxRatePicker name="taxBps" value={taxBps} onChange={(v) => { setTaxBps(v); setDirty(true); }} />
+      <Section title="Taxes par défaut">
+        <TaxRegimePicker name="taxRegime" value={taxRegime} onChange={(v) => { setTaxRegime(v); setDirty(true); }} />
+        <p className="text-[13px] text-muted">« Sans taxes » : petit fournisseur non inscrit (moins de 30 000 $ de revenus taxables sur 4 trimestres).</p>
       </Section>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">

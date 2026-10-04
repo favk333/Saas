@@ -1,5 +1,6 @@
 import "server-only";
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from "pdf-lib";
+import { TPS_LABEL, TVQ_LABEL } from "./quote";
 import type { InvoiceDetail } from "./types";
 
 export type Seller = {
@@ -7,7 +8,8 @@ export type Seller = {
   address: string | null;
   phone: string | null;
   siret: string | null;
-  vat_number: string | null;
+  tps_number: string | null;
+  tvq_number: string | null;
   insurance: string | null;
 };
 
@@ -19,15 +21,22 @@ const INK = rgb(0.067, 0.094, 0.153); // #111827
 const MUTED = rgb(0.42, 0.447, 0.502); // #6B7280
 const LINE = rgb(0.898, 0.906, 0.922); // #E5E7EB
 
-const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-const date = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Paris" });
-const money = (cents: number) => eur.format(cents / 100);
-const qty = (q: number) => q.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+const cad = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" });
+// Format québécois AAAA-MM-JJ, à l'heure de Montréal.
+const date = (iso: string) => new Date(iso).toLocaleDateString("fr-CA", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Toronto" });
+const money = (cents: number) => cad.format(cents / 100);
+const qty = (q: number) => q.toLocaleString("fr-CA", { maximumFractionDigits: 2 });
+/** "123456789RT0001" → "123456789 RT0001" */
+const regNumber = (n: string) => n.replace(/^(\d+)([A-Z]{2}\d{4})$/, "$1 $2");
+const phone = (e164: string) =>
+  /^\+1\d{10}$/.test(e164)
+    ? e164.slice(2).replace(/^(\d{3})(\d{3})(\d{4})$/, "$1 $2-$3")
+    : e164.replace(/^\+33/, "0").replace(/(\d{2})(?=\d)/g, "$1 ");
 
 /**
  * Devis (avant signature) ou facture (après), avec les mentions obligatoires :
- * identité et SIRET du vendeur, numéro, dates, détail HT / TVA / TTC,
- * échéance et pénalités de retard, assurance décennale, signature du client.
+ * identité du vendeur et numéros de TPS / TVQ, numéro, dates, sous-total,
+ * TPS et TVQ ligne par ligne, total, échéance, assurance, signature du client.
  */
 export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, signaturePng: Uint8Array | null) {
   const doc = await PDFDocument.create();
@@ -87,9 +96,10 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   y -= 18;
   const sellerLines = [
     seller.address,
-    seller.phone && `Tél. ${seller.phone.replace(/^\+33/, "0").replace(/(\d{2})(?=\d)/g, "$1 ")}`,
+    seller.phone && `Tél. ${phone(seller.phone)}`,
     seller.siret && `SIRET ${seller.siret}`,
-    seller.vat_number && `TVA ${seller.vat_number}`,
+    seller.tps_number && `TPS ${regNumber(seller.tps_number)}`,
+    seller.tvq_number && `TVQ ${regNumber(seller.tvq_number)}`,
   ].filter(Boolean) as string[];
   const docLines: [string, string][] = [
     [isInvoice ? "Date d'émission" : "Date", date(invoice.signed_at ?? invoice.created_at)],
@@ -126,8 +136,8 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   const tableHeader = () => {
     text("DÉSIGNATION", M, y, { size: 8, color: MUTED });
     text("QTÉ", cQty, y, { size: 8, color: MUTED, align: "right" });
-    text("PU HT", cUnit, y, { size: 8, color: MUTED, align: "right" });
-    text("TOTAL HT", cTotal, y, { size: 8, color: MUTED, align: "right" });
+    text("PRIX UNIT.", cUnit, y, { size: 8, color: MUTED, align: "right" });
+    text("MONTANT", cTotal, y, { size: 8, color: MUTED, align: "right" });
     y -= 8;
     rule(y);
   };
@@ -156,11 +166,14 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
     text(value, cTotal, y, { f: strong ? bold : font, size: strong ? 11 : 9.5, align: "right" });
     y -= strong ? 18 : 14;
   };
-  totalRow("Total HT", money(invoice.subtotal_cents));
-  if (invoice.tax_bps > 0) totalRow(`TVA ${(invoice.tax_bps / 100).toLocaleString("fr-FR")} %`, money(invoice.tax_cents));
-  totalRow(invoice.tax_bps > 0 ? "Total TTC" : "Total", money(invoice.total_cents), true);
-  if (invoice.tax_bps === 0) {
-    text("TVA non applicable, art. 293 B du CGI", cTotal, y, { size: 8.5, color: MUTED, align: "right" });
+  totalRow("Sous-total", money(invoice.subtotal_cents));
+  if (invoice.tax_regime === "qc") {
+    totalRow(TPS_LABEL, money(invoice.tps_cents));
+    totalRow(TVQ_LABEL, money(invoice.tvq_cents));
+  }
+  totalRow("Total", money(invoice.total_cents), true);
+  if (invoice.tax_regime === "exempt") {
+    text("Taxes non applicables : fournisseur non inscrit à la TPS et à la TVQ", cTotal, y, { size: 8.5, color: MUTED, align: "right" });
     y -= 14;
   }
 
@@ -168,14 +181,11 @@ export async function renderInvoicePdf(invoice: InvoiceDetail, seller: Seller, s
   const terms: string[] = [];
   if (isInvoice) {
     if (invoice.paid_at) terms.push(`Facture acquittée le ${date(invoice.paid_at)}.`);
-    else if (invoice.due_at) terms.push(`Paiement à réception, au plus tard le ${date(invoice.due_at)}. Pas d'escompte pour paiement anticipé.`);
-    terms.push(
-      "En cas de retard : pénalités au taux de 3 fois le taux d'intérêt légal, et indemnité forfaitaire de 40 € pour frais de recouvrement (clients professionnels).",
-    );
+    else if (invoice.due_at) terms.push(`Paiement à réception, au plus tard le ${date(invoice.due_at)}.`);
   } else {
     terms.push("Devis gratuit, valable 30 jours. Les travaux débutent après acceptation signée.");
   }
-  if (seller.insurance) terms.push(`Assurance décennale : ${seller.insurance}.`);
+  if (seller.insurance) terms.push(`Assurance : ${seller.insurance}.`);
 
   y -= 16;
   for (const t of terms) {

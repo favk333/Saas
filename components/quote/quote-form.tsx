@@ -5,8 +5,8 @@ import { PenLine, Plus, Send, X } from "lucide-react";
 import { createQuote, type QuoteFormState } from "@/app/(app)/devis/nouveau/actions";
 import { formatCents } from "@/lib/format";
 import { withNetworkGuard } from "@/lib/network";
-import { computeTotals, parseEuros } from "@/lib/quote";
-import { TaxRatePicker } from "@/components/ui/tax-rate-picker";
+import { computeTotals, isTaxRegime, parseAmount, TPS_LABEL, TVQ_LABEL, type TaxRegime } from "@/lib/quote";
+import { TaxRegimePicker } from "@/components/ui/tax-regime-picker";
 
 type Line = { key: number; description: string; price: string };
 
@@ -19,7 +19,7 @@ const emptyLine = (): Line => ({ key: nextKey++, description: "", price: "" });
 
 // Brouillon conservé sur le téléphone : une coupure réseau ou une app fermée ne fait rien perdre.
 const DRAFT_KEY = "chantier:quote-draft";
-type Draft = { client: { name: string; phone: string; address: string }; lines: Omit<Line, "key">[]; taxBps: number };
+type Draft = { client: { name: string; phone: string; address: string }; lines: Omit<Line, "key">[]; taxRegime: TaxRegime };
 
 const readDraft = (): Draft | null => {
   try {
@@ -48,11 +48,11 @@ async function submitQuote(prev: QuoteFormState, fd: FormData): Promise<QuoteFor
   }
 }
 
-export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
+export function QuoteForm({ defaultTaxRegime }: { defaultTaxRegime: TaxRegime }) {
   const [state, formAction, pending] = useActionState<QuoteFormState, FormData>(submitQuote, { error: null });
   const [client, setClient] = useState({ name: "", phone: "", address: "" });
   const [lines, setLines] = useState<Line[]>(() => [emptyLine()]);
-  const [taxBps, setTaxBps] = useState(defaultTaxBps);
+  const [taxRegime, setTaxRegime] = useState<TaxRegime>(defaultTaxRegime);
   const [restored, setRestored] = useState(false);
   const loaded = useRef(false);
 
@@ -61,7 +61,7 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
     if (d) {
       setClient(d.client);
       setLines(d.lines.length ? d.lines.map((l) => ({ ...l, key: nextKey++ })) : [emptyLine()]);
-      setTaxBps(d.taxBps);
+      if (isTaxRegime(d.taxRegime)) setTaxRegime(d.taxRegime); // brouillons antérieurs : régime par défaut
       setRestored(true);
     }
     loaded.current = true;
@@ -70,18 +70,18 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
   useEffect(() => {
     if (!loaded.current) return;
     const empty = !client.name && !client.phone && !client.address && lines.every((l) => !l.description && !l.price);
-    writeDraft(empty ? null : { client, lines: lines.map(({ description, price }) => ({ description, price })), taxBps });
-  }, [client, lines, taxBps]);
+    writeDraft(empty ? null : { client, lines: lines.map(({ description, price }) => ({ description, price })), taxRegime });
+  }, [client, lines, taxRegime]);
 
   const discardDraft = () => {
     writeDraft(null);
     setClient({ name: "", phone: "", address: "" });
     setLines([emptyLine()]);
-    setTaxBps(defaultTaxBps);
+    setTaxRegime(defaultTaxRegime);
     setRestored(false);
   };
 
-  const totals = computeTotals(lines.map((l) => parseEuros(l.price) ?? 0), taxBps);
+  const totals = computeTotals(lines.map((l) => parseAmount(l.price) ?? 0), taxRegime);
   const updateLine = (key: number, patch: Partial<Line>) =>
     setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
@@ -122,11 +122,11 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
                 className={`${input} min-w-0 flex-1`} autoComplete="off"
                 value={line.description} onChange={(e) => updateLine(line.key, { description: e.target.value })} />
               <div className="relative w-28 shrink-0">
-                <input name="price" aria-label={`Prix HT ligne ${i + 1}`} inputMode="decimal" placeholder="0"
-                  aria-invalid={line.price.trim() !== "" && parseEuros(line.price) === null}
+                <input name="price" aria-label={`Prix avant taxes ligne ${i + 1}`} inputMode="decimal" placeholder="0"
+                  aria-invalid={line.price.trim() !== "" && parseAmount(line.price) === null}
                   className={`${input} pr-7 text-right tabular-nums aria-invalid:border-late aria-invalid:text-late`} autoComplete="off"
                   value={line.price} onChange={(e) => updateLine(line.key, { price: e.target.value })} />
-                <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[15px] text-muted">€</span>
+                <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[15px] text-muted">$</span>
               </div>
               {lines.length > 1 && (
                 <button type="button" aria-label={`Supprimer la ligne ${i + 1}`}
@@ -143,17 +143,24 @@ export function QuoteForm({ defaultTaxBps }: { defaultTaxBps: number }) {
           <Plus size={18} strokeWidth={1.75} aria-hidden />
           Ajouter une ligne
         </button>
-        <p className="text-[13px] text-muted">Prix hors taxes.</p>
+        <p className="text-[13px] text-muted">Prix avant taxes.</p>
       </Section>
 
-      <Section title="TVA">
-        <TaxRatePicker name="taxBps" value={taxBps} onChange={setTaxBps} />
+      <Section title="Taxes">
+        <TaxRegimePicker name="taxRegime" value={taxRegime} onChange={setTaxRegime} />
       </Section>
 
       <dl className="space-y-1.5 px-4 py-5 text-[15px] tabular-nums">
-        <div className="flex justify-between text-muted"><dt>Sous-total HT</dt><dd>{formatCents(totals.subtotal)}</dd></div>
-        <div className="flex justify-between text-muted"><dt>TVA</dt><dd>{formatCents(totals.tax)}</dd></div>
-        <div className="flex justify-between pt-1.5 text-[18px] font-semibold"><dt>Total TTC</dt><dd>{formatCents(totals.total)}</dd></div>
+        <div className="flex justify-between text-muted"><dt>Sous-total</dt><dd>{formatCents(totals.subtotal)}</dd></div>
+        {taxRegime === "qc" ? (
+          <>
+            <div className="flex justify-between text-muted"><dt>{TPS_LABEL}</dt><dd>{formatCents(totals.tps)}</dd></div>
+            <div className="flex justify-between text-muted"><dt>{TVQ_LABEL}</dt><dd>{formatCents(totals.tvq)}</dd></div>
+          </>
+        ) : (
+          <div className="text-muted">Taxes non applicables</div>
+        )}
+        <div className="flex justify-between pt-1.5 text-[18px] font-semibold"><dt>Total</dt><dd>{formatCents(totals.total)}</dd></div>
       </dl>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">

@@ -1,7 +1,8 @@
-const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const cad = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" });
 
+/** 123456 → "1 234,56 $" */
 export function formatCents(cents: number) {
-  return eur.format(cents / 100);
+  return cad.format(cents / 100);
 }
 
 const day = 86_400_000;
@@ -12,5 +13,5 @@ export function formatAgo(iso: string, now = new Date()) {
   if (d <= 0) return "aujourd'hui";
   if (d === 1) return "hier";
   if (d < 30) return `il y a ${d} j`;
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return new Date(iso).toLocaleDateString("fr-CA", { day: "numeric", month: "short" });
 }

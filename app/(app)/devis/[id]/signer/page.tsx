@@ -25,7 +25,7 @@ export default async function SignOnSitePage({ params }: { params: Promise<{ id:
       <QuoteSummary invoice={invoice} />
 
       <p className="px-4 pb-3 text-[14px] text-muted">
-        Bon pour accord. En signant, le client accepte ce devis de {formatCents(invoice.total_cents)} TTC.
+        Bon pour accord. En signant, le client accepte ce devis d'un montant total de {formatCents(invoice.total_cents)}.
       </p>
       <SignatureForm action={signOnSite} fields={{ id: invoice.id }} />
     </div>

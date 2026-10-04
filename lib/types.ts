@@ -45,8 +45,10 @@ export type LineItem = {
 export type InvoiceDetail = Invoice & {
   user_id: string;
   site_address: string | null;
-  tax_bps: number;
+  tax_regime: "qc" | "exempt";
   subtotal_cents: number;
+  tps_cents: number;
+  tvq_cents: number;
   tax_cents: number;
   sign_token: string;
   stripe_payment_link_url: string | null;
@@ -57,4 +59,4 @@ export type InvoiceDetail = Invoice & {
 };
 
 export const INVOICE_DETAIL_SELECT =
-  "id, user_id, status, quote_number, invoice_number, site_address, tax_bps, subtotal_cents, tax_cents, total_cents, sign_token, stripe_payment_link_url, signature_path, signed_via, created_at, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone), line_items(position, description, quantity, unit_price_cents, total_cents)";
+  "id, user_id, status, quote_number, invoice_number, site_address, tax_regime, subtotal_cents, tps_cents, tvq_cents, tax_cents, total_cents, sign_token, stripe_payment_link_url, signature_path, signed_via, created_at, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone), line_items(position, description, quantity, unit_price_cents, total_cents)";

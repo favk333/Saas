@@ -36,7 +36,7 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
         <>
           <QuoteSummary invoice={invoice} />
           <p className="px-4 pb-3 text-[14px] text-muted">
-            Bon pour accord. En signant, vous acceptez ce devis de {formatCents(invoice.total_cents)} TTC.
+            Bon pour accord. En signant, vous acceptez ce devis d'un montant total de {formatCents(invoice.total_cents)}.
           </p>
           <SignatureForm action={signRemote} fields={{ token }} />
         </>

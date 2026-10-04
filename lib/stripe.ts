@@ -50,7 +50,7 @@ export async function createConnectAccount(input: { userId: string; email: strin
   return stripe().accounts.create(
     {
       type: "standard",
-      country: "FR",
+      country: "CA",
       email: input.email ?? undefined,
       business_profile: { name: input.companyName || undefined },
       metadata: { user_id: input.userId },

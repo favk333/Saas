@@ -4,12 +4,13 @@ import { renderInvoicePdf, pdfFilename, type Seller } from "./pdf";
 import type { InvoiceDetail } from "./types";
 
 const DEMO_SELLER: Seller = {
-  company_name: "Dupont Électricité",
-  address: "4 rue du Port, 69002 Lyon",
-  phone: "+33611223344",
-  siret: "12345678900012",
-  vat_number: "FR32123456789",
-  insurance: "MAAF Pro, contrat n° 123456, France métropolitaine",
+  company_name: "Tremblay Électrique",
+  address: "1200 rue Sainte-Catherine O., Montréal (Québec) H3B 1K9",
+  phone: "+15145551234",
+  siret: null,
+  tps_number: "123456789RT0001",
+  tvq_number: "1234567890TQ0001",
+  insurance: "Responsabilité civile Intact, police n° 123456",
 };
 
 /**
@@ -23,7 +24,7 @@ export async function invoicePdfResponse(invoice: InvoiceDetail, supabase: Supab
   if (supabase) {
     const { data } = await supabase
       .from("profiles")
-      .select("company_name, address, phone, siret, vat_number, insurance")
+      .select("company_name, address, phone, siret, tps_number, tvq_number, insurance")
       .eq("id", invoice.user_id)
       .single();
     if (!data) return new Response("Profil introuvable", { status: 404 });

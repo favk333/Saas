@@ -19,14 +19,14 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 
 ## 1. Supabase : base de données
 
-- [ ] Créer le projet dans la région **Europe (Paris, `eu-west-3`)**. Les données des clients (téléphones, signatures, IP) restent ainsi dans l'UE.
-- [ ] Appliquer les 4 migrations **dans l'ordre**, avec l'une des deux méthodes :
+- [ ] Créer le projet dans la région **Canada (Central, `ca-central-1`)**. Les données des clients (téléphones, signatures, IP) restent ainsi au Canada (Loi 25).
+- [ ] Appliquer les 5 migrations **dans l'ordre**, avec l'une des deux méthodes :
   - CLI :
     ```bash
     supabase link --project-ref <ref>
     supabase db push
     ```
-  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, puis `0004_legal_mentions.sql`.
+  - SQL Editor : coller et exécuter `0001_init.sql`, `0002_signatures.sql`, `0003_profile_stripe.sql`, `0004_legal_mentions.sql`, puis `0005_quebec_taxes.sql`.
 - [ ] Vérifier :
   - **Table Editor** : les tables `profiles`, `clients`, `invoices` et `line_items` existent, chacune avec l'icône RLS activée.
   - **Storage** : le bucket `signatures` existe et est **privé**.
@@ -57,7 +57,7 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 ## 3. Vercel : application
 
 - [ ] Importer le dépôt GitHub. Framework : Next.js, détecté automatiquement.
-- [ ] **Settings → Functions → Region** : `cdg1` (Paris), près de la base Supabase.
+- [ ] **Settings → Functions → Region** : `yul1` (Montréal), près de la base Supabase.
 - [ ] **Settings → Environment Variables** (Production + Preview) :
 
   | Variable | Valeur |
@@ -82,7 +82,7 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
   - mettre à jour `NEXT_PUBLIC_APP_URL` et redéployer ;
   - mettre à jour les URLs Supabase (section 2) ;
   - mettre à jour l'URL des webhooks Stripe (section 4).
-- [ ] **Cron** : **Settings → Cron Jobs** doit afficher `/api/cron/relances`, chaque jour à 8 h UTC (10 h à Paris l'été, 9 h l'hiver). Vercel ajoute tout seul l'en-tête `Authorization: Bearer $CRON_SECRET`.
+- [ ] **Cron** : **Settings → Cron Jobs** doit afficher `/api/cron/relances`, chaque jour à 14 h UTC (10 h à Montréal l'été, 9 h l'hiver). Vercel ajoute tout seul l'en-tête `Authorization: Bearer $CRON_SECRET`.
 
 ---
 
@@ -90,7 +90,8 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 
 Commencer en **mode test** : le sélecteur est en haut à droite du dashboard Stripe.
 
-- [ ] **Activer Connect** (**Connect → Get started**) et choisir le modèle « plateforme ». Les artisans auront des comptes **Standard** : ils reçoivent l'argent directement sur leur compte.
+- [ ] **Activer Connect** (**Connect → Get started**) et choisir le modèle « plateforme ». Les artisans auront des comptes **Standard** canadiens (`country: "CA"`) : ils reçoivent l'argent directement sur leur compte, en dollars canadiens.
+- [ ] Ton compte Stripe plateforme doit pouvoir créer des comptes connectés au Canada. C'est le cas le plus simple avec un compte plateforme canadien ; sinon, vérifier les conditions « cross-border » de Stripe Connect.
 - [ ] **Connect → Settings → Branding** : nom (« Chantier »), icône et couleur `#111827`. C'est ce que l'artisan voit pendant l'activation de son compte.
 - [ ] **Clé API** : **Developers → API keys**, copier la clé secrète dans `STRIPE_SECRET_KEY`.
 - [ ] **Webhook 1, compte de la plateforme** (**Developers → Webhooks → Add endpoint**) :
@@ -110,11 +111,12 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 
 ## 5. Twilio : SMS
 
-- [ ] **Messaging → Settings → Geo permissions** : autoriser **France**, plus les autres pays de tes clients.
+- [ ] **Messaging → Settings → Geo permissions** : autoriser **Canada**, plus les autres pays de tes clients.
 - [ ] **Expéditeur des SMS.** Les règles françaises évoluent régulièrement, donc les vérifier dans la console Twilio au moment de l'inscription. Deux options :
-  - **Sender ID alphanumérique** (ex. `Chantier`, 11 caractères max) : simple et lisible, mais le client ne peut pas répondre. Une procédure d'enregistrement peut être demandée.
-  - **Numéro français** acheté chez Twilio : le client peut répondre, mais des documents réglementaires sont exigés.
-- [ ] Remplir `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, et `TWILIO_FROM_NUMBER` (au format `+33…`, ou le Sender ID alphanumérique).
+  - **Numéro local canadien** (+1, indicatif 514, 438, 450…) acheté chez Twilio : le plus simple, et le client peut répondre.
+  - **Numéro sans frais** (+1 8XX) : meilleure délivrabilité en volume, mais une vérification (toll-free verification) est exigée avant l'envoi.
+  - Les Sender ID alphanumériques (ex. `Chantier`) ne sont pas pris en charge au Canada.
+- [ ] Remplir `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, et `TWILIO_FROM_NUMBER` (au format `+1…`).
 - [ ] Compte d'essai : il n'envoie qu'aux numéros vérifiés. Ajouter ton portable dans **Verified Caller IDs** pour la recette.
 - [ ] Coût : un SMS contenant des caractères hors GSM (certains accents, `œ`) est découpé en plusieurs parties facturées séparément. Les SMS de l'app font entre 120 et 160 caractères.
 
@@ -125,7 +127,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 À faire sur ton téléphone, avec l'URL de production et Stripe en mode test.
 
 - [ ] **Connexion** : `/login`, recevoir l'e-mail, cliquer le lien. On arrive sur l'écran « Bienvenue ».
-- [ ] **Profil** : nom, SIRET, adresse, n° TVA, assurance décennale, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
+- [ ] **Profil** : nom, adresse, n° de TPS (`123456789 RT0001`) et de TVQ (`1234567890 TQ0001`), assurance, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
 - [ ] **Stripe Connect** : Réglages → « Activer les paiements ». Remplir le formulaire Stripe avec les données de test (Stripe propose « Use test data »). Au retour, on doit lire « Activés » et le bandeau disparaît.
   - Si le statut reste « incomplet », vérifier dans Stripe que le webhook 2 reçoit bien `account.updated`.
 - [ ] **Devis par SMS** : un devis vers **ton** numéro, puis « Envoyer par SMS ». Le SMS doit arriver avec un lien `https://<domaine>/s/…`.
@@ -173,11 +175,11 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 - [ ] **Twilio** : passer le compte en payant et finaliser l'expéditeur (section 5).
 - [ ] **SMTP** configuré (section 2).
 - [ ] Redéployer sur Vercel.
-- [ ] Refaire rapidement le parcours de la section 6 avec un vrai paiement de 1 €, puis le rembourser dans Stripe.
+- [ ] Refaire rapidement le parcours de la section 6 avec un vrai paiement de 1 $, puis le rembourser dans Stripe.
 - [ ] **Juridique** (à valider avec un juriste ou un expert-comptable) :
   - mentions légales et CGU du service ;
-  - politique de confidentialité (RGPD) : l'app stocke les noms, téléphones, adresses, signatures et IP des clients des artisans ;
-  - contrat de sous-traitance RGPD avec les artisans, qui sont responsables de traitement pour les données de leurs clients ;
+  - politique de confidentialité conforme à la **Loi 25** (Québec) et à la LPRPDE : l'app stocke les noms, téléphones, adresses, signatures et IP des clients des artisans ;
+  - désigner un responsable de la protection des renseignements personnels, et encadrer par contrat le traitement des données des clients des artisans ;
   - relire le texte « Devis gratuit, valable 30 jours » du PDF, à rendre configurable si certains artisans font payer leurs devis.
 
 ---
