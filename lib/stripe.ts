@@ -20,8 +20,10 @@ export async function createPaymentLink(input: {
   totalCents: number;
   currency: string;
   stripeAccountId: string;
+  applicationFeeCents: number; // commission de la plateforme, 0 si aucune
 }) {
   const metadata = { invoice_id: input.invoiceId };
+  const fee = input.applicationFeeCents;
   return stripe().paymentLinks.create(
     {
       line_items: [
@@ -37,8 +39,11 @@ export async function createPaymentLink(input: {
       metadata,
       payment_intent_data: { metadata },
       restrictions: { completed_sessions: { limit: 1 } }, // une facture = un paiement
+      // Prélevée sur le paiement du client et versée au compte de la plateforme ; le reste va à l'artisan.
+      ...(fee > 0 ? { application_fee_amount: fee } : {}),
     },
-    { idempotencyKey: `payment-link-${input.invoiceId}`, stripeAccount: input.stripeAccountId },
+    // La commission fait partie de la clé : si le taux change, Stripe ne confond pas les deux demandes.
+    { idempotencyKey: `payment-link-${input.invoiceId}-fee-${fee}`, stripeAccount: input.stripeAccountId },
   );
 }
 

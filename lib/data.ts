@@ -138,6 +138,7 @@ function demoDetails(): InvoiceDetail[] {
       total_cents: t.total,
       sign_token: `demo${n}`,
       stripe_payment_link_url: inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
+      platform_fee_cents: inv.id === "1" ? Math.floor((t.total * 100 + 5_000) / 10_000) : null,
       signature_path: null,
       signed_via: inv.signed_at ? "on_site" : null,
       signed_offline: false,

@@ -41,6 +41,7 @@ export async function generatePaymentLink(_prev: ActionState, formData: FormData
     await ensurePaymentLink(await createClient(), id);
   } catch (e) {
     if (e instanceof PaymentsNotEnabledError) return { error: "Activez d'abord les paiements dans Réglages." };
+    console.error("Création du lien de paiement impossible", e); // Stripe indisponible, commission mal configurée…
     return { error: "Création du lien impossible. Réessayez." };
   }
   revalidatePath(`/soumissions/${id}`);

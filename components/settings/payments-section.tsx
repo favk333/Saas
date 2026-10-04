@@ -11,9 +11,24 @@ const onboard = withNetworkGuard(startStripeOnboarding);
 const button =
   "flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-50";
 
-export function PaymentsSection({ accountId, enabled, failed }: { accountId: string | null; enabled: boolean; failed: boolean }) {
+export function PaymentsSection({
+  accountId,
+  enabled,
+  failed,
+  feeLabel,
+}: {
+  accountId: string | null;
+  enabled: boolean;
+  failed: boolean;
+  feeLabel: string | null; // ex. "1 % + 0,30 $"
+}) {
   const [state, action, pending] = useActionState<SettingsState>(onboard, { error: null });
   const error = state.error ?? (failed ? "Stripe indisponible. Réessayez dans un instant." : null);
+  const fee = feeLabel && (
+    <p className="text-[13px] text-muted">
+      Commission de la plateforme : {feeLabel} par paiement en ligne, prélevée automatiquement, en plus des frais Stripe.
+    </p>
+  );
 
   if (enabled) {
     return (
@@ -22,6 +37,7 @@ export function PaymentsSection({ accountId, enabled, failed }: { accountId: str
           <CircleCheck size={18} strokeWidth={1.75} aria-hidden />
           Activés. Les paiements arrivent sur votre compte Stripe.
         </p>
+        {fee}
         <a href="https://dashboard.stripe.com" target="_blank" rel="noreferrer" className={button}>
           Ouvrir Stripe
           <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden />
@@ -38,8 +54,9 @@ export function PaymentsSection({ accountId, enabled, failed }: { accountId: str
           : "Non activés. Vos clients ne peuvent pas payer par carte."}
       </p>
       <p className="text-[13px] text-muted">
-        Compte Stripe à votre nom : identité, IBAN. Environ 5 minutes. Vous êtes payé directement.
+        Compte Stripe à votre nom : identité, coordonnées bancaires. Environ 5 minutes. Vous êtes payé directement.
       </p>
+      {fee}
       <form action={action}>
         <button className={button} disabled={pending}>
           {pending ? "Redirection…" : accountId ? "Terminer l'activation" : "Activer les paiements"}

@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge";
 import { InvoiceActions } from "@/components/invoice/invoice-actions";
 import { QuoteSummary } from "@/components/quote/quote-summary";
 import { getInvoice } from "@/lib/data";
+import { formatCents } from "@/lib/format";
 import { displayStatus } from "@/lib/types";
 
 const dateTime = (iso: string) =>
@@ -40,6 +41,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         {isInvoice && <div className="flex justify-between"><dt>Soumission</dt><dd className="tabular-nums">{invoice.quote_number}</dd></div>}
         {invoice.signed_at && <div className="flex justify-between"><dt>Signée{invoice.signed_offline ? " (hors ligne)" : ""}</dt><dd>{dateTime(invoice.signed_at)}</dd></div>}
         {invoice.due_at && !invoice.paid_at && <div className="flex justify-between"><dt>Échéance</dt><dd>{dateTime(invoice.due_at)}</dd></div>}
+        {invoice.stripe_payment_link_url && invoice.platform_fee_cents ? (
+          <div className="flex justify-between"><dt>Commission (au paiement)</dt><dd className="tabular-nums">{formatCents(invoice.platform_fee_cents)}</dd></div>
+        ) : null}
         {invoice.paid_at && <div className="flex justify-between text-paid"><dt>Payée</dt><dd>{dateTime(invoice.paid_at)}</dd></div>}
       </dl>
 
