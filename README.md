@@ -10,6 +10,8 @@ cp .env.example .env.local   # Supabase, Twilio…
 npm run dev                  # http://localhost:3000
 ```
 
+Mise en production : voir **[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)**.
+
 Sans `.env.local`, l'app tourne en **mode démo** : données fictives, pas de connexion, pas d'enregistrement.
 
 Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` aux Redirect URLs.
