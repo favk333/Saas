@@ -29,18 +29,21 @@ app/
     actions.ts                   ✓ server actions (relance SMS : stub)
     devis/nouveau/page.tsx       ✓ création devis
     devis/nouveau/actions.ts     ✓ enregistrement + envoi SMS
-    devis/[id]/page.tsx            détail devis / facture
-    devis/[id]/signer/page.tsx     signature tactile sur place
+    devis/[id]/page.tsx          ✓ détail devis / facture + lien de paiement
+    devis/[id]/signer/page.tsx   ✓ signature tactile sur place
+    devis/[id]/actions.ts        ✓ signer, générer / envoyer le lien
   (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
   auth/callback/route.ts         ✓ retour du lien magique
-  s/[token]/page.tsx               signature à distance (lien SMS, public)
+  s/[token]/page.tsx             ✓ signature à distance + paiement (public)
   api/
     cron/relances/route.ts         relances J+3 / J+7 (Vercel Cron)
     webhooks/stripe/route.ts       paiement reçu → statut "paid"
 components/
   dashboard/                     ✓ invoice-row, status-badge
   quote/quote-form.tsx           ✓ formulaire devis (totaux en direct)
-  signature/                       pad de signature (canvas)
+  quote/quote-summary.tsx        ✓ récapitulatif lignes + totaux
+  invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
+  signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
 lib/
   types.ts                       ✓ types + statut dérivé "En retard"
   format.ts                      ✓ montants €, dates relatives
@@ -48,10 +51,13 @@ lib/
   data.ts                        ✓ requêtes Supabase (+ données démo)
   supabase/{config,server}.ts    ✓ client Supabase SSR
   twilio.ts                      ✓ envoi SMS (API REST)
-  stripe.ts                        paiement
+  supabase/admin.ts              ✓ client service role (pages publiques, cron)
+  signature.ts                   ✓ validation PNG, stockage, passage en "signed"
+  stripe.ts  payments.ts         ✓ Payment Link (Stripe Connect si configuré)
 proxy.ts                         ✓ session Supabase + redirection /login
 supabase/
   migrations/0001_init.sql       ✓ profiles, clients, invoices, line_items + RLS
+  migrations/0002_signatures.sql ✓ bucket privé "signatures" + preuves (IP, user agent, canal)
 ```
 
 ## Base de données

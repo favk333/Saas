@@ -33,3 +33,25 @@ export function displayStatus(inv: Invoice, now = new Date()): DisplayStatus {
   if (inv.status === "sent") return "sent";
   return "draft";
 }
+
+export type LineItem = {
+  position: number;
+  description: string;
+  quantity: number;
+  unit_price_cents: number;
+  total_cents: number;
+};
+
+export type InvoiceDetail = Invoice & {
+  user_id: string;
+  site_address: string | null;
+  tax_bps: number;
+  subtotal_cents: number;
+  tax_cents: number;
+  sign_token: string;
+  stripe_payment_link_url: string | null;
+  line_items: LineItem[];
+};
+
+export const INVOICE_DETAIL_SELECT =
+  "id, user_id, status, quote_number, invoice_number, site_address, tax_bps, subtotal_cents, tax_cents, total_cents, sign_token, stripe_payment_link_url, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone), line_items(position, description, quantity, unit_price_cents, total_cents)";

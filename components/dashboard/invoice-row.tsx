@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { remindBySms } from "@/app/(app)/actions";
 import { formatAgo, formatCents } from "@/lib/format";
@@ -29,21 +30,23 @@ export function InvoiceRow({ invoice, now }: { invoice: Invoice; now: Date }) {
 
   return (
     <li className="px-4 py-4">
-      <div className="flex items-baseline justify-between gap-4">
-        <p className="truncate text-[16px] font-medium">{invoice.client.name}</p>
-        <p className="shrink-0 text-[16px] font-semibold tabular-nums">{formatCents(invoice.total_cents)}</p>
-      </div>
+      <Link href={`/devis/${invoice.id}`} className="-mx-4 -my-1 block px-4 py-1 active:bg-canvas">
+        <div className="flex items-baseline justify-between gap-4">
+          <p className="truncate text-[16px] font-medium">{invoice.client.name}</p>
+          <p className="shrink-0 text-[16px] font-semibold tabular-nums">{formatCents(invoice.total_cents)}</p>
+        </div>
 
-      <div className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
-        <StatusBadge status={status} />
-        <span className="tabular-nums">{invoice.invoice_number ?? invoice.quote_number}</span>
-        {info && (
-          <>
-            <span aria-hidden>·</span>
-            <span className="truncate">{info}</span>
-          </>
-        )}
-      </div>
+        <div className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
+          <StatusBadge status={status} />
+          <span className="tabular-nums">{invoice.invoice_number ?? invoice.quote_number}</span>
+          {info && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="truncate">{info}</span>
+            </>
+          )}
+        </div>
+      </Link>
 
       {canRemind && (
         <form action={remindBySms} className="mt-3">

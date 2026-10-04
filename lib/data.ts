@@ -1,6 +1,7 @@
+import { createAdminClient } from "./supabase/admin";
 import { createClient, getUserId } from "./supabase/server";
 import { isSupabaseConfigured } from "./supabase/config";
-import type { Invoice } from "./types";
+import { INVOICE_DETAIL_SELECT, type Invoice, type InvoiceDetail } from "./types";
 
 const PENDING = new Set(["draft", "sent", "signed"]);
 
@@ -36,7 +37,66 @@ export async function getDefaultTaxBps() {
   return data?.default_tax_bps ?? 2000;
 }
 
+function sortLines(inv: InvoiceDetail) {
+  inv.line_items.sort((a, b) => a.position - b.position);
+  return inv;
+}
+
+/** Devis/facture de l'artisan connecté (RLS). */
+export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
+  if (!isSupabaseConfigured) return demoDetail((i) => i.id === id);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from("invoices").select(INVOICE_DETAIL_SELECT).eq("id", id).maybeSingle();
+  return data ? sortLines(data as unknown as InvoiceDetail) : null;
+}
+
+/** Accès public par jeton de signature (service role). */
+export async function getInvoiceByToken(token: string) {
+  if (!isSupabaseConfigured) {
+    const invoice = demoDetail((i) => i.sign_token === token);
+    return invoice && { invoice, companyName: "Dupont Électricité" };
+  }
+  if (!/^[0-9a-f]{32}$/.test(token)) return null;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("invoices")
+    .select(INVOICE_DETAIL_SELECT)
+    .eq("sign_token", token)
+    .neq("status", "canceled")
+    .maybeSingle();
+  if (!data) return null;
+  const invoice = sortLines(data as unknown as InvoiceDetail);
+  const { data: profile } = await admin.from("profiles").select("company_name").eq("id", invoice.user_id).maybeSingle();
+  return { invoice, companyName: profile?.company_name || "" };
+}
+
 // ---- Mode démo (pas de .env.local) ----
+
+function demoDetail(match: (i: InvoiceDetail) => boolean): InvoiceDetail | null {
+  const base = demoDashboard();
+  const all = [...base.pending, ...base.paid].map((inv, n): InvoiceDetail => {
+    const lines = [
+      { position: 0, description: "Remplacement tableau électrique", quantity: 1, unit_price_cents: Math.round((inv.total_cents / 1.1) * 0.7), total_cents: 0 },
+      { position: 1, description: "Main d'œuvre", quantity: 1, unit_price_cents: 0, total_cents: 0 },
+    ];
+    const subtotal = Math.round(inv.total_cents / 1.1);
+    lines[0].total_cents = lines[0].unit_price_cents;
+    lines[1].unit_price_cents = lines[1].total_cents = subtotal - lines[0].total_cents;
+    return {
+      ...inv,
+      user_id: "demo",
+      site_address: "12 rue des Lilas, 69003 Lyon",
+      tax_bps: 1000,
+      subtotal_cents: subtotal,
+      tax_cents: inv.total_cents - subtotal,
+      sign_token: `demo${n}`,
+      stripe_payment_link_url: inv.status === "signed" && inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
+      line_items: lines,
+    };
+  });
+  return all.find(match) ?? null;
+}
 
 const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
 
