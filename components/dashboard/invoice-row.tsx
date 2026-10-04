@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
-import { remindBySms } from "@/app/(app)/actions";
 import { formatAgo, formatCents } from "@/lib/format";
 import { displayStatus, type DisplayStatus, type Invoice } from "@/lib/types";
+import { RemindButton } from "./remind-button";
 import { StatusBadge } from "./status-badge";
 
 function detail(inv: Invoice, status: DisplayStatus, now: Date) {
@@ -48,18 +47,7 @@ export function InvoiceRow({ invoice, now }: { invoice: Invoice; now: Date }) {
         </div>
       </Link>
 
-      {canRemind && (
-        <form action={remindBySms} className="mt-3">
-          <input type="hidden" name="invoiceId" value={invoice.id} />
-          <button
-            type="submit"
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            <MessageSquare size={18} strokeWidth={1.75} aria-hidden />
-            Relancer par SMS
-          </button>
-        </form>
-      )}
+      {canRemind && <RemindButton invoiceId={invoice.id} />}
     </li>
   );
 }

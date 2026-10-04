@@ -3,7 +3,7 @@ import Stripe from "stripe";
 
 let client: Stripe | null = null;
 
-function stripe() {
+export function stripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("Stripe non configuré");
   return (client ??= new Stripe(key));
