@@ -18,12 +18,16 @@ export async function saveProfile(_prev: SettingsState, formData: FormData): Pro
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
   const siret = String(formData.get("siret") ?? "").replace(/\s/g, "") || null;
   const address = String(formData.get("address") ?? "").trim() || null;
+  const vatNumber = String(formData.get("vatNumber") ?? "").replace(/\s/g, "").toUpperCase() || null;
+  const insurance = String(formData.get("insurance") ?? "").trim() || null;
   const taxBps = Number(formData.get("taxBps"));
 
   if (!companyName) return { error: "Nom de l'entreprise manquant." };
   if (companyName.length > 80) return { error: "Nom trop long (80 caractères max)." };
   if (rawPhone && !phone) return { error: "Numéro de téléphone invalide." };
   if (siret && !/^\d{14}$/.test(siret)) return { error: "Le SIRET compte 14 chiffres." };
+  if (vatNumber && !/^[A-Z]{2}[0-9A-Z]{2,12}$/.test(vatNumber)) return { error: "N° de TVA invalide (ex. FR32123456789)." };
+  if (insurance && insurance.length > 200) return { error: "Assurance : 200 caractères max." };
   if (!isTaxRate(taxBps)) return { error: "Taux de TVA invalide." };
   if (!isSupabaseConfigured) return { error: DEMO };
 
@@ -33,7 +37,7 @@ export async function saveProfile(_prev: SettingsState, formData: FormData): Pro
 
   const { error } = await supabase
     .from("profiles")
-    .update({ company_name: companyName, phone, siret, address, default_tax_bps: taxBps })
+    .update({ company_name: companyName, phone, siret, address, vat_number: vatNumber, insurance, default_tax_bps: taxBps })
     .eq("id", user.id);
   if (error) return { error: "Enregistrement impossible. Réessayez." };
 

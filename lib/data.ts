@@ -78,6 +78,8 @@ export type Profile = {
   phone: string | null;
   siret: string | null;
   address: string | null;
+  vat_number: string | null;
+  insurance: string | null;
   default_tax_bps: number;
   stripe_account_id: string | null;
   stripe_charges_enabled: boolean;
@@ -88,6 +90,7 @@ export async function getProfile(): Promise<Profile | null> {
     return {
       email: "contact@dupont-elec.fr", company_name: "Dupont Électricité", phone: "+33611223344",
       siret: "12345678900012", address: "4 rue du Port, 69002 Lyon", default_tax_bps: 2000,
+      vat_number: "FR32123456789", insurance: "Décennale MAAF Pro n° 123456, France métropolitaine",
       stripe_account_id: null, stripe_charges_enabled: false,
     };
   }
@@ -96,7 +99,7 @@ export async function getProfile(): Promise<Profile | null> {
   if (!user) return null;
   const { data } = await supabase
     .from("profiles")
-    .select("company_name, phone, siret, address, default_tax_bps, stripe_account_id, stripe_charges_enabled")
+    .select("company_name, phone, siret, address, vat_number, insurance, default_tax_bps, stripe_account_id, stripe_charges_enabled")
     .eq("id", user.id)
     .maybeSingle();
   return data ? { email: user.email, ...data } : null;
@@ -123,6 +126,9 @@ function demoDetail(match: (i: InvoiceDetail) => boolean): InvoiceDetail | null 
       tax_cents: inv.total_cents - subtotal,
       sign_token: `demo${n}`,
       stripe_payment_link_url: inv.status === "signed" && inv.id === "1" ? "https://buy.stripe.com/test_demo" : null,
+      signature_path: null,
+      signed_via: inv.signed_at ? "on_site" : null,
+      created_at: inv.sent_at ?? new Date().toISOString(),
       line_items: lines,
     };
   });

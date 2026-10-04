@@ -50,8 +50,11 @@ export type InvoiceDetail = Invoice & {
   tax_cents: number;
   sign_token: string;
   stripe_payment_link_url: string | null;
+  signature_path: string | null;
+  signed_via: "on_site" | "remote" | null;
+  created_at: string;
   line_items: LineItem[];
 };
 
 export const INVOICE_DETAIL_SELECT =
-  "id, user_id, status, quote_number, invoice_number, site_address, tax_bps, subtotal_cents, tax_cents, total_cents, sign_token, stripe_payment_link_url, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone), line_items(position, description, quantity, unit_price_cents, total_cents)";
+  "id, user_id, status, quote_number, invoice_number, site_address, tax_bps, subtotal_cents, tax_cents, total_cents, sign_token, stripe_payment_link_url, signature_path, signed_via, created_at, sent_at, signed_at, due_at, paid_at, reminders_sent, client:clients(name, phone), line_items(position, description, quantity, unit_price_cents, total_cents)";

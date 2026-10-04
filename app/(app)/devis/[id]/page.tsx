@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileDown } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { InvoiceActions } from "@/components/invoice/invoice-actions";
 import { QuoteSummary } from "@/components/quote/quote-summary";
@@ -27,7 +27,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <h1 className="flex-1 truncate text-[17px] font-semibold tabular-nums">
           {isInvoice ? `Facture ${invoice.invoice_number}` : `Devis ${invoice.quote_number}`}
         </h1>
-        <div className="pr-3"><StatusBadge status={status} /></div>
+        <StatusBadge status={status} />
+        <a href={`/devis/${invoice.id}/pdf`} target="_blank" aria-label="Télécharger le PDF"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md active:bg-canvas">
+          <FileDown size={22} strokeWidth={1.75} aria-hidden />
+        </a>
       </header>
 
       <QuoteSummary invoice={invoice} />

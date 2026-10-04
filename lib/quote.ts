@@ -5,6 +5,7 @@ export const TAX_RATES = [
   { bps: 2000, label: "20 %" },
   { bps: 1000, label: "10 %" },
   { bps: 550, label: "5,5 %" },
+  { bps: 0, label: "Sans" }, // franchise en base (micro-entreprise)
 ] as const;
 
 export function isTaxRate(bps: number) {
@@ -13,7 +14,7 @@ export function isTaxRate(bps: number) {
 
 /** "1 250,50" | "1250.5" | "80" → centimes. null si invalide. */
 export function parseEuros(input: string): number | null {
-  const s = input.replace(/[\s  €]/g, "").replace(",", ".");
+  const s = input.replace(/[\s\u00a0\u202f€]/g, "").replace(",", ".");
   if (!/^\d+(\.\d{0,2})?$/.test(s)) return null;
   const cents = Math.round(parseFloat(s) * 100);
   return cents <= 100_000_000 ? cents : null;

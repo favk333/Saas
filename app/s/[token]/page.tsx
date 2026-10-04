@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, FileDown } from "lucide-react";
 import { QuoteSummary } from "@/components/quote/quote-summary";
 import { SignatureForm } from "@/components/signature/signature-form";
 import { getInvoiceByToken } from "@/lib/data";
@@ -20,9 +20,16 @@ export default async function RemoteSignPage({ params }: { params: Promise<{ tok
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-white pb-[calc(100px+env(safe-area-inset-bottom))]">
-      <header className="border-b border-line px-4 pt-[max(16px,env(safe-area-inset-top))] pb-4">
-        <p className="text-[15px] font-semibold">{companyName}</p>
-        <p className="text-[14px] text-muted tabular-nums">{number}</p>
+      <header className="flex items-center justify-between gap-2 border-b border-line pt-[max(12px,env(safe-area-inset-top))] pb-3 pl-4 pr-1">
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold">{companyName}</p>
+          <p className="text-[14px] text-muted tabular-nums">{number}</p>
+        </div>
+        <a href={`/s/${token}/pdf`} target="_blank"
+          className="flex h-12 shrink-0 items-center gap-1.5 rounded-md px-3 text-[14px] font-medium active:bg-canvas">
+          <FileDown size={18} strokeWidth={1.75} aria-hidden />
+          PDF
+        </a>
       </header>
 
       {invoice.status === "sent" && (

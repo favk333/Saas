@@ -23,6 +23,8 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
     phone: displayPhone(profile.phone),
     siret: profile.siret ?? "",
     address: profile.address ?? "",
+    vatNumber: profile.vat_number ?? "",
+    insurance: profile.insurance ?? "",
   });
   const [taxBps, setTaxBps] = useState(profile.default_tax_bps);
   const [dirty, setDirty] = useState(false);
@@ -59,6 +61,17 @@ export function ProfileForm({ profile, welcome }: { profile: Profile; welcome: b
         <div>
           <label htmlFor="address" className={label}>Adresse</label>
           <input {...field("address")} className={input} autoComplete="street-address" />
+        </div>
+      </Section>
+
+      <Section title="Mentions légales">
+        <div>
+          <label htmlFor="vatNumber" className={label}>N° TVA intracommunautaire</label>
+          <input {...field("vatNumber")} className={`${input} uppercase tabular-nums`} autoComplete="off" placeholder="Vide si TVA non applicable" />
+        </div>
+        <div>
+          <label htmlFor="insurance" className={label}>Assurance décennale</label>
+          <input {...field("insurance")} className={input} autoComplete="off" placeholder="Assureur, n° de contrat, zone couverte" />
         </div>
       </Section>
 

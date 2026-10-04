@@ -31,12 +31,14 @@ app/
     devis/nouveau/actions.ts     ✓ enregistrement + envoi SMS
     devis/[id]/page.tsx          ✓ détail devis / facture + lien de paiement
     devis/[id]/signer/page.tsx   ✓ signature tactile sur place
+    devis/[id]/pdf/route.ts      ✓ PDF devis / facture (artisan connecté)
     devis/[id]/actions.ts        ✓ signer, générer / envoyer le lien
     reglages/page.tsx            ✓ profil entreprise, TVA par défaut, Stripe, déconnexion
     reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
   (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
   auth/callback/route.ts         ✓ retour du lien magique
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
+  s/[token]/pdf/route.ts         ✓ PDF pour le client (par jeton)
   api/
     cron/relances/route.ts       ✓ relances J+3 / J+7 (Vercel Cron)
     webhooks/stripe/route.ts     ✓ paiement reçu → "paid" ; account.updated → statut Connect
@@ -61,12 +63,15 @@ lib/
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
   connect.ts                     ✓ création du compte Connect, onboarding, synchro statut
+  pdf.ts                         ✓ rendu PDF (pdf-lib, Helvetica, A4, pagination)
+  invoice-pdf.ts                 ✓ données vendeur + signature → réponse PDF
 proxy.ts                         ✓ session Supabase + redirection /login
 vercel.json                      ✓ cron quotidien 8 h UTC
 supabase/
   migrations/0001_init.sql       ✓ profiles, clients, invoices, line_items + RLS
   migrations/0002_signatures.sql ✓ bucket privé "signatures" + preuves (IP, user agent, canal)
   migrations/0003_profile_stripe.sql ✓ adresse, statut Stripe, colonnes du profil verrouillées
+  migrations/0004_legal_mentions.sql ✓ n° TVA intracommunautaire, assurance décennale
 ```
 
 ## Base de données
@@ -106,3 +111,16 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/relances
   1. Activer Connect sur le compte plateforme.
   2. Créer un webhook « comptes connectés » vers `/api/webhooks/stripe` avec `account.updated`, `checkout.session.completed` et `checkout.session.async_payment_succeeded`. Son secret va dans `STRIPE_CONNECT_WEBHOOK_SECRET`.
 - Les colonnes Stripe et les compteurs de numérotation du profil ne sont modifiables que côté serveur (privilèges par colonne, migration 0003).
+
+## PDF
+
+- `/devis/[id]/pdf` pour l'artisan connecté et `/s/[token]/pdf` pour le client. Les brouillons ne sont jamais exposés par le lien public.
+- Le PDF est un **devis** avant signature (validité 30 jours) et une **facture** après.
+- Mentions imprimées :
+  - vendeur : nom, adresse, SIRET, n° TVA intracommunautaire ;
+  - numéros et dates (émission, devis d'origine, échéance) ;
+  - détail HT / TVA / TTC, ou « TVA non applicable, art. 293 B du CGI » quand la TVA est à 0 ;
+  - pénalités de retard et indemnité de 40 € ;
+  - assurance décennale ;
+  - signature du client, avec sa date et son canal (sur place ou en ligne).
+- Généré à la demande, rien n'est stocké. Police Helvetica standard (jeu WinAnsi) : les caractères non couverts, comme les emoji, sont retirés.
