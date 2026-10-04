@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* Palette restreinte : on remplace les tokens Tailwind par nos 6 couleurs. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+
+  --color-ink: #111827;      /* texte, boutons principaux */
+  --color-muted: #6B7280;    /* texte secondaire */
+  --color-line: #E5E7EB;     /* bordures */
+  --color-canvas: #F9FAFB;   /* fond secondaire */
+  --color-paid: #15803D;     /* paiement réussi (texte, contraste AA) */
+  --color-late: #B91C1C;     /* retard */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+}
