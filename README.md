@@ -102,7 +102,7 @@ supabase/
   migrations/0010_platform_fee_taxes.sql ✓ TPS / TVQ sur la commission
   templates/                     ✓ e-mails Supabase en français, à coller dans le tableau de bord :
                                    lien-de-connexion (Magic Link), confirmation-inscription (Confirm signup),
-                                   reinitialisation-mot-de-passe (Reset Password)
+                                   reinitialisation-mot-de-passe (Reset Password), changement-adresse (Change Email Address)
 ```
 
 ## Base de données
