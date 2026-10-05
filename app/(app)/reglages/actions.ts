@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { deleteAccount } from "@/lib/account";
 import { onboardingUrl } from "@/lib/connect";
 import { checkNewPassword, updatePassword } from "@/lib/password";
 import { normalizeNeq, normalizeRbq } from "@/lib/identifiers";
@@ -113,4 +114,27 @@ export async function changeEmail(_prev: EmailState, formData: FormData): Promis
   }
   revalidatePath("/reglages");
   return { error: null, pendingEmail: email };
+}
+
+const DELETE_WORD = "SUPPRIMER"; // même mot dans components/settings/delete-account-section.tsx
+
+/** Suppression définitive du compte (voir lib/account.ts). */
+export async function deleteMyAccount(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== DELETE_WORD) {
+    return { error: `Tapez ${DELETE_WORD} pour confirmer.` };
+  }
+  if (!isSupabaseConfigured) return { error: DEMO };
+  const supabase = await createClient();
+  const user = await getUser(supabase);
+  if (!user) redirect("/login");
+
+  try {
+    await deleteAccount(user.id);
+  } catch (e) {
+    console.error("Suppression du compte impossible", user.id, e);
+    return { error: "Suppression interrompue. Réessayez dans un instant." };
+  }
+  // Le jeton de session reste signé jusqu'à son expiration : on efface les cookies tout de suite.
+  await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+  return { error: null, done: true };
 }
