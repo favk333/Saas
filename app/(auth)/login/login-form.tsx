@@ -14,6 +14,7 @@ const input = "mt-1 h-12 w-full rounded-md border border-line px-3 text-[16px] o
 const CALLBACK_ERRORS = {
   link: "Lien de connexion expiré ou invalide. Connectez-vous à nouveau.",
   reset: "Lien de réinitialisation expiré, ou ouvert sur un autre appareil. Demandez-en un nouveau depuis ce téléphone.",
+  email: "Si vous avez confirmé le changement d'adresse, connectez-vous avec la nouvelle adresse. Sinon, le lien a peut-être expiré.",
 };
 
 export function LoginForm({ callbackError }: { callbackError: keyof typeof CALLBACK_ERRORS | null }) {

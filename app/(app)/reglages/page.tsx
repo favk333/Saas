@@ -2,17 +2,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { LogoutButton } from "@/components/settings/logout-button";
+import { EmailSection, type EmailReturn } from "@/components/settings/email-section";
 import { PasswordSection } from "@/components/settings/password-section";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
 import { StatementsSection } from "@/components/settings/statements-section";
 import { monthsOf } from "@/lib/commissions";
-import { getCommissionRows, getCurrentUserId, getProfile } from "@/lib/data";
+import { getAccountEmail, getCommissionRows, getCurrentUserId, getProfile } from "@/lib/data";
 import { feeInfoSafe } from "@/lib/fees";
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string }> }) {
-  const { bienvenue, stripe } = await searchParams;
-  const [profile, userId, commissionRows] = await Promise.all([getProfile(), getCurrentUserId(), getCommissionRows()]);
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ bienvenue?: string; stripe?: string; email?: string }> }) {
+  const { bienvenue, stripe, email: emailParam } = await searchParams;
+  const [profile, userId, commissionRows, account] = await Promise.all([getProfile(), getCurrentUserId(), getCommissionRows(), getAccountEmail()]);
+  const emailReturn: EmailReturn = emailParam === "ok" || emailParam === "attente" || emailParam === "erreur" ? emailParam : null;
   if (!profile || !userId) redirect("/login");
   const welcome = Boolean(bienvenue) || !profile.company_name;
 
@@ -43,9 +45,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <>
           <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} fee={feeInfoSafe()} />
           <StatementsSection months={monthsOf(commissionRows)} />
+          <EmailSection email={account.email} pendingEmail={account.pendingEmail} returned={emailReturn} />
           <PasswordSection />
           <Section title="Compte">
-            {profile.email && <p className="text-[15px]">{profile.email}</p>}
             <LogoutButton userId={userId} />
           </Section>
         </>

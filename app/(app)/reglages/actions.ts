@@ -85,3 +85,32 @@ export async function setPassword(_prev: SettingsState, formData: FormData): Pro
   const error = await updatePassword(await createClient(), password);
   return error ? { error } : { error: null, done: true };
 }
+
+export type EmailState = { error: string | null; pendingEmail?: string };
+
+/**
+ * Changement d'adresse e-mail. Supabase envoie un lien de confirmation (aux deux adresses si
+ * « Secure email change » est actif) ; le retour passe par /auth/email.
+ */
+export async function changeEmail(_prev: EmailState, formData: FormData): Promise<EmailState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Adresse e-mail invalide." };
+  if (!isSupabaseConfigured) return { error: DEMO };
+
+  const supabase = await createClient();
+  const user = await getUser(supabase);
+  if (!user) redirect("/login");
+  if (user.email?.toLowerCase() === email) return { error: "C'est déjà votre adresse." };
+
+  const h = await headers();
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+  const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: `${origin}/auth/email` });
+  if (error) {
+    if (error.code === "email_exists") return { error: "Cette adresse est déjà utilisée par un autre compte." };
+    if (error.code === "email_address_invalid") return { error: "Adresse e-mail refusée. Vérifiez-la." };
+    if (error.status === 429 || error.code?.startsWith("over_")) return { error: "Trop de demandes. Réessayez dans quelques minutes." };
+    return { error: "Changement impossible pour le moment. Réessayez." };
+  }
+  revalidatePath("/reglages");
+  return { error: null, pendingEmail: email };
+}

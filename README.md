@@ -14,7 +14,7 @@ Mise en production : voir **[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)**.
 
 Sans `.env.local`, l'app tourne en **mode démo** : données fictives, pas de connexion, pas d'enregistrement.
 
-Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` (lien de connexion) et `<APP_URL>/auth/reset` (mot de passe oublié) aux Redirect URLs.
+Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` (lien de connexion) `<APP_URL>/auth/reset` (mot de passe oublié) et `<APP_URL>/auth/email` (changement d'adresse) aux Redirect URLs.
 
 ## Structure
 
@@ -37,12 +37,13 @@ app/
     soumissions/[id]/signer/page.tsx ✓ signature tactile sur place
     soumissions/[id]/pdf/route.ts    ✓ PDF soumission / facture (artisan connecté)
     soumissions/[id]/actions.ts      ✓ signer, générer / envoyer le lien
-    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, mot de passe, déconnexion
-    reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
+    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, adresse e-mail, mot de passe, déconnexion
+    reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe, changer d'adresse e-mail
     reglages/releves/[mois]/pdf  ✓ relevé mensuel des commissions (PDF)
   (auth)/login/                  ✓ connexion e-mail + mot de passe, ou lien par e-mail (comptes sans mot de passe)
   auth/callback/route.ts         ✓ retour du lien magique
   auth/reset/route.ts            ✓ retour du lien « mot de passe oublié » → /reinitialiser
+  auth/email/route.ts            ✓ retour des liens de confirmation du changement d'adresse → /reglages
   (auth)/reinitialiser/          ✓ choix du nouveau mot de passe (session de récupération)
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
   s/[token]/pdf/route.ts         ✓ PDF pour le client (par jeton)
@@ -58,7 +59,7 @@ components/
   quote/quote-summary.tsx        ✓ récapitulatif lignes + totaux
   invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
   signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
-  settings/                      ✓ formulaire profil, section paiements
+  settings/                      ✓ formulaire profil, section paiements, adresse e-mail, mot de passe
   ui/tax-regime-picker.tsx       ✓ sélecteur « TPS + TVQ » / « Sans taxes »
   service-worker.tsx             ✓ enregistrement du SW, effacement du cache
   offline-banner.tsx             ✓ bandeau hors ligne
