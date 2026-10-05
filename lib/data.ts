@@ -212,3 +212,14 @@ export async function getAccountEmail(): Promise<{ email: string | null; pending
   const { data } = await (await createClient()).auth.getUser();
   return { email: data.user?.email ?? null, pendingEmail: data.user?.new_email ?? null };
 }
+
+/** Ce que la suppression du compte effacera (affiché avant de confirmer). */
+export async function getAccountSummary(): Promise<{ documents: number; unpaid: number }> {
+  if (!isSupabaseConfigured) return { documents: 3, unpaid: 1 };
+  const supabase = await createClient();
+  const [all, unpaid] = await Promise.all([
+    supabase.from("invoices").select("id", { count: "exact", head: true }).neq("status", "canceled"),
+    supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "signed"),
+  ]);
+  return { documents: all.count ?? 0, unpaid: unpaid.count ?? 0 };
+}

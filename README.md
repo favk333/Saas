@@ -37,8 +37,8 @@ app/
     soumissions/[id]/signer/page.tsx ✓ signature tactile sur place
     soumissions/[id]/pdf/route.ts    ✓ PDF soumission / facture (artisan connecté)
     soumissions/[id]/actions.ts      ✓ signer, générer / envoyer le lien
-    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, adresse e-mail, mot de passe, déconnexion
-    reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe, changer d'adresse e-mail
+    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, adresse e-mail, mot de passe, déconnexion, suppression du compte
+    reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe, changer d'adresse e-mail, supprimer le compte
     reglages/releves/[mois]/pdf  ✓ relevé mensuel des commissions (PDF)
   (auth)/login/                  ✓ connexion e-mail + mot de passe, ou lien par e-mail (comptes sans mot de passe)
   auth/callback/route.ts         ✓ retour du lien magique
@@ -59,7 +59,7 @@ components/
   quote/quote-summary.tsx        ✓ récapitulatif lignes + totaux
   invoice/invoice-actions.tsx    ✓ actions facture (lien, SMS, partage)
   signature/signature-form.tsx   ✓ pad de signature (Canvas, sans dépendance)
-  settings/                      ✓ formulaire profil, section paiements, adresse e-mail, mot de passe
+  settings/                      ✓ formulaire profil, section paiements, adresse e-mail, mot de passe, suppression du compte
   ui/tax-regime-picker.tsx       ✓ sélecteur « TPS + TVQ » / « Sans taxes »
   service-worker.tsx             ✓ enregistrement du SW, effacement du cache
   offline-banner.tsx             ✓ bandeau hors ligne
@@ -75,7 +75,8 @@ lib/
   outbox.ts                      ✓ file d'attente hors ligne (IndexedDB) côté page
   quote-server.ts                ✓ création de soumission et envoi du SMS (en ligne et différé)
   remote-sign.ts                 ✓ signature par le client via /s/[token] (en ligne et différée)
-  supabase/admin.ts              ✓ client service role (pages publiques, cron)
+  supabase/admin.ts              ✓ client service role (pages publiques, cron, suppression du compte)
+  account.ts                     ✓ suppression du compte : signatures, utilisateur (cascade), liens de paiement
   signature.ts                   ✓ validation PNG, stockage, passage en "signed"
   stripe.ts  payments.ts         ✓ Payment Link sur le compte Connect de l'artisan
   fees.ts                        ✓ commission de la plateforme (PLATFORM_FEE_BPS / _FIXED_CENTS)
