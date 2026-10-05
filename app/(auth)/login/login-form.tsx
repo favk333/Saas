@@ -25,6 +25,7 @@ export function LoginForm({ callbackError }: { callbackError: keyof typeof CALLB
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [shown, setShown] = useState(false);
+  const [last, setLast] = useState<"login" | "link" | "reset" | null>(null); // dernière action : son résultat s'affiche
 
   if (reset.resetSent) {
     return (
@@ -43,7 +44,8 @@ export function LoginForm({ callbackError }: { callbackError: keyof typeof CALLB
     );
   }
 
-  const error = login.error ?? link.error ?? reset.error ?? (callbackError ? CALLBACK_ERRORS[callbackError] : null);
+  const current = last && { login, link, reset }[last];
+  const error = current ? current.error : callbackError ? CALLBACK_ERRORS[callbackError] : null;
 
   return (
     <form action={loginAction} className="mt-6">
@@ -62,20 +64,21 @@ export function LoginForm({ callbackError }: { callbackError: keyof typeof CALLB
       </div>
 
       {error && <p role="alert" className="mt-3 text-[14px] break-words whitespace-pre-line text-late">{error}</p>}
+      {error && current?.hint && <p className="mt-2 text-[14px] text-muted">{current.hint}</p>}
 
-      <button disabled={busy}
+      <button disabled={busy} onClick={() => setLast("login")}
         className="mt-4 h-13 w-full rounded-md bg-ink text-[16px] font-medium text-white active:bg-black disabled:opacity-50">
         {loggingIn ? "Connexion…" : "Se connecter"}
       </button>
 
       {/* Comptes sans mot de passe (créés par lien) et première connexion. */}
-      <button type="submit" formAction={linkAction} formNoValidate disabled={busy}
+      <button type="submit" formAction={linkAction} formNoValidate disabled={busy} onClick={() => setLast("link")}
         className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line text-[15px] font-medium active:bg-canvas disabled:opacity-50">
         <Mail size={18} strokeWidth={1.75} aria-hidden />
         {sending ? "Envoi…" : "Recevoir un lien par e-mail"}
       </button>
 
-      <button type="submit" formAction={resetAction} formNoValidate disabled={busy}
+      <button type="submit" formAction={resetAction} formNoValidate disabled={busy} onClick={() => setLast("reset")}
         className="mt-2 h-12 w-full rounded-md text-[15px] font-medium text-muted active:bg-canvas disabled:opacity-50">
         {resetting ? "Envoi…" : "Mot de passe oublié ?"}
       </button>
