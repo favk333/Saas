@@ -48,13 +48,14 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 - [ ] **Authentication → Sign In / Providers → Email** : activé. Connexion par **e-mail + mot de passe** ; le lien par e-mail reste proposé (comptes sans mot de passe, première connexion). Les mots de passe se définissent dans Réglages → « Mot de passe » (8 caractères minimum ; Supabase peut imposer davantage dans *Password requirements*).
 - [ ] **Authentication → URL Configuration** :
   - Site URL : `https://<domaine>`
-  - Redirect URLs : `https://<domaine>/auth/callback` (lien de connexion) **et** `https://<domaine>/auth/reset` (mot de passe oublié). Ajouter aussi les équivalents `http://localhost:3000/…` pour le développement.
-  - ⚠️ Sans `/auth/reset` dans cette liste, Supabase refuse la redirection et le lien « mot de passe oublié » ne mène pas à l'app.
+  - Redirect URLs : `https://<domaine>/auth/callback` (lien de connexion) `https://<domaine>/auth/reset` (mot de passe oublié) **et** `https://<domaine>/auth/email` (changement d'adresse e-mail). Ajouter aussi les équivalents `http://localhost:3000/…` pour le développement.
+  - ⚠️ Sans `/auth/reset` ou `/auth/email` dans cette liste, Supabase refuse la redirection et le lien « mot de passe oublié » ou de confirmation d'adresse ne mène pas à l'app.
+- [ ] **Authentication → Sign In / Providers → Email → Secure email change** : laisser activé (par défaut). Un changement d'adresse doit alors être confirmé depuis l'ancienne **et** la nouvelle adresse ; Réglages l'explique à l'artisan.
 - [ ] **Templates d'e-mail** (Authentication → Emails → Templates) : coller les modèles français du dossier [`supabase/templates/`](../supabase/templates/), tels quels (Supabase remplit `{{ .ConfirmationURL }}` et `{{ .Email }}`).
   - **Magic Link** (lien de connexion, compte existant) : objet « Votre lien de connexion », corps = [`lien-de-connexion.html`](../supabase/templates/lien-de-connexion.html).
   - **Confirm signup** (lien de connexion, première fois : Supabase envoie ce modèle-là quand le compte n'existe pas encore) : objet « Bienvenue sur Chantier : confirmez votre adresse », corps = [`confirmation-inscription.html`](../supabase/templates/confirmation-inscription.html).
   - **Reset Password** : objet « Choisissez un nouveau mot de passe », corps = contenu de [`supabase/templates/reinitialisation-mot-de-passe.html`](../supabase/templates/reinitialisation-mot-de-passe.html), à coller tel quel (les variables `{{ .ConfirmationURL }}` et `{{ .Email }}` sont remplies par Supabase). Le lien expire selon *Email OTP Expiration* (1 h par défaut).
-  - **Change Email Address** : objet « Confirmez votre nouvelle adresse e-mail », corps = [`changement-adresse.html`](../supabase/templates/changement-adresse.html). Il utilise aussi `{{ .NewEmail }}`. L'app ne propose pas encore de changer d'adresse : ce modèle ne sert que si un changement est déclenché autrement.
+  - **Change Email Address** : objet « Confirmez votre nouvelle adresse e-mail », corps = [`changement-adresse.html`](../supabase/templates/changement-adresse.html). Il utilise aussi `{{ .NewEmail }}`. Envoyé quand l'artisan change d'adresse dans Réglages → « Adresse e-mail ».
 - [ ] **SMTP personnalisé (indispensable avant de vrais utilisateurs).** L'envoi d'e-mails intégré à Supabase est limité à quelques messages par heure et réservé aux tests. Configurer un fournisseur dans **Authentication → Emails → SMTP Settings**, avec un expéditeur sur ton domaine (SPF/DKIM configurés).
 
 ---
@@ -142,6 +143,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 - [ ] **Connexion** : `/login` → « Recevoir un lien par e-mail », cliquer le lien. On arrive sur l'écran « Bienvenue ».
 - [ ] **Mot de passe** : Réglages → « Mot de passe » → enregistrer ; se déconnecter ; se reconnecter avec e-mail + mot de passe. Un mauvais mot de passe affiche « E-mail ou mot de passe incorrect. »
 - [ ] **Mot de passe oublié** : sur la page de connexion, saisir l'e-mail → « Mot de passe oublié ? ». Ouvrir l'e-mail **sur le même téléphone**, choisir un nouveau mot de passe : on arrive connecté sur l'accueil. L'ancien mot de passe ne fonctionne plus.
+- [ ] **Changement d'adresse** : Réglages → « Adresse e-mail » → saisir une autre adresse → « Changer d'adresse ». Le bloc « Changement en attente » apparaît. Ouvrir les e-mails de confirmation (ancienne et nouvelle adresse, sur le même téléphone) : Réglages affiche « Adresse e-mail changée » et la nouvelle adresse. Se reconnecter ensuite avec la nouvelle adresse et le même mot de passe ; l'ancienne ne fonctionne plus.
 - [ ] **Profil** : nom, adresse, NEQ, licence RBQ, n° de TPS (`123456789 RT0001`) et de TVQ (`1234567890 TQ0001`), assurance, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
 - [ ] **Stripe Connect** : Réglages → « Activer les paiements ». Remplir le formulaire Stripe avec les données de test (Stripe propose « Use test data »). Au retour, on doit lire « Activés » et le bandeau disparaît.
   - Si le statut reste « incomplet », vérifier dans Stripe que le webhook 2 reçoit bien `account.updated`.

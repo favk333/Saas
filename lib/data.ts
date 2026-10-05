@@ -205,3 +205,10 @@ export async function getCommissionRows(): Promise<CommissionRow[]> {
   if (error) throw error;
   return (data ?? []) as CommissionRow[];
 }
+
+/** Adresse du compte et changement d'adresse en attente de confirmation (Supabase : new_email). */
+export async function getAccountEmail(): Promise<{ email: string | null; pendingEmail: string | null }> {
+  if (!isSupabaseConfigured) return { email: "info@tremblay-electrique.ca", pendingEmail: null };
+  const { data } = await (await createClient()).auth.getUser();
+  return { email: data.user?.email ?? null, pendingEmail: data.user?.new_email ?? null };
+}
