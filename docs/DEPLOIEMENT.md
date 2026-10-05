@@ -89,7 +89,7 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
   ⚠️ **`NEXT_PUBLIC_APP_URL` est critique.** Il sert à construire les liens envoyés par SMS. S'il est absent, les clients reçoivent un lien cassé (`undefined/s/…`).
 
   ⚠️ **Les variables `NEXT_PUBLIC_*` sont figées au moment du build.** Après toute modification, il faut **redéployer**.
-- [ ] Déployer, puis vérifier que l'URL ouvre bien `/login`.
+- [ ] Déployer, puis vérifier que l'URL ouvre bien `/login`. Si une variable Supabase est mal copiée (URL du tableau de bord, chemin `/rest/v1`, clé d'un autre projet, clé `service_role` à la place de la clé anon…), la page de connexion l'affiche en rouge, sans montrer les valeurs. En cas d'échec de connexion, le message contient aussi l'erreur exacte de Supabase (ex. `Invalid login credentials (code invalid_credentials, HTTP 400)`, ou `fetch failed` si Supabase est injoignable). Les variables `NEXT_PUBLIC_…` sont figées à la build : **redéployer** après les avoir modifiées.
 - [ ] Domaine personnalisé (**Settings → Domains**), si tu en as un. Ensuite :
   - mettre à jour `NEXT_PUBLIC_APP_URL` et redéployer ;
   - mettre à jour les URLs Supabase (section 2) ;

@@ -61,7 +61,7 @@ export function LoginForm({ callbackError }: { callbackError: keyof typeof CALLB
         </button>
       </div>
 
-      {error && <p role="alert" className="mt-3 text-[14px] text-late">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-[14px] break-words whitespace-pre-line text-late">{error}</p>}
 
       <button disabled={busy}
         className="mt-4 h-13 w-full rounded-md bg-ink text-[16px] font-medium text-white active:bg-black disabled:opacity-50">
