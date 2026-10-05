@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { isSupabaseConfigured, supabaseConfigIssues } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-export type LoginState = { error: string | null; sent?: boolean; resetSent?: boolean };
+export type LoginState = { error: string | null; hint?: string; sent?: boolean; resetSent?: boolean };
+
+/** Comptes créés par lien : pas de mot de passe tant qu'il n'est pas choisi. Supabase répond alors invalid_credentials. */
+const NO_PASSWORD_HINT =
+  "Pas encore de mot de passe (compte créé avec un lien par e-mail) ? Appuyez sur « Mot de passe oublié ? » pour en choisir un, ou sur « Recevoir un lien par e-mail » pour vous connecter sans.";
 
 const DEMO = "Mode démo : connexion désactivée (configurez Supabase).";
 
@@ -51,7 +55,7 @@ export async function signInWithPassword(_prev: LoginState, formData: FormData):
 
   try {
     const { error } = await (await createClient()).auth.signInWithPassword({ email, password });
-    if (error) return { error: authMessage(error) };
+    if (error) return { error: authMessage(error), hint: error.code === "invalid_credentials" ? NO_PASSWORD_HINT : undefined };
   } catch (e) {
     return { error: thrown(e) };
   }
