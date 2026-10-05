@@ -50,7 +50,9 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
   - Site URL : `https://<domaine>`
   - Redirect URLs : `https://<domaine>/auth/callback` (lien de connexion) **et** `https://<domaine>/auth/reset` (mot de passe oublié). Ajouter aussi les équivalents `http://localhost:3000/…` pour le développement.
   - ⚠️ Sans `/auth/reset` dans cette liste, Supabase refuse la redirection et le lien « mot de passe oublié » ne mène pas à l'app.
-- [ ] **Templates d'e-mail** (optionnel mais conseillé) : traduire « Magic Link » en français. Garder `{{ .ConfirmationURL }}` comme lien.
+- [ ] **Templates d'e-mail** (Authentication → Emails → Templates) : coller les modèles français du dossier [`supabase/templates/`](../supabase/templates/), tels quels (Supabase remplit `{{ .ConfirmationURL }}` et `{{ .Email }}`).
+  - **Magic Link** (lien de connexion, compte existant) : objet « Votre lien de connexion », corps = [`lien-de-connexion.html`](../supabase/templates/lien-de-connexion.html).
+  - **Confirm signup** (lien de connexion, première fois : Supabase envoie ce modèle-là quand le compte n'existe pas encore) : objet « Bienvenue sur Chantier : confirmez votre adresse », corps = [`confirmation-inscription.html`](../supabase/templates/confirmation-inscription.html).
   - **Reset Password** : objet « Choisissez un nouveau mot de passe », corps = contenu de [`supabase/templates/reinitialisation-mot-de-passe.html`](../supabase/templates/reinitialisation-mot-de-passe.html), à coller tel quel (les variables `{{ .ConfirmationURL }}` et `{{ .Email }}` sont remplies par Supabase). Le lien expire selon *Email OTP Expiration* (1 h par défaut).
 - [ ] **SMTP personnalisé (indispensable avant de vrais utilisateurs).** L'envoi d'e-mails intégré à Supabase est limité à quelques messages par heure et réservé aux tests. Configurer un fournisseur dans **Authentication → Emails → SMTP Settings**, avec un expéditeur sur ton domaine (SPF/DKIM configurés).
 
