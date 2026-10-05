@@ -48,7 +48,8 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 - [ ] **Authentication → Sign In / Providers → Email** : activé. Connexion par **e-mail + mot de passe** ; le lien par e-mail reste proposé (comptes sans mot de passe, première connexion). Les mots de passe se définissent dans Réglages → « Mot de passe » (8 caractères minimum ; Supabase peut imposer davantage dans *Password requirements*).
 - [ ] **Authentication → URL Configuration** :
   - Site URL : `https://<domaine>`
-  - Redirect URLs : `https://<domaine>/auth/callback`. Ajouter aussi `http://localhost:3000/auth/callback` pour le développement.
+  - Redirect URLs : `https://<domaine>/auth/callback` (lien de connexion) **et** `https://<domaine>/auth/reset` (mot de passe oublié). Ajouter aussi les équivalents `http://localhost:3000/…` pour le développement.
+  - ⚠️ Sans `/auth/reset` dans cette liste, Supabase refuse la redirection et le lien « mot de passe oublié » ne mène pas à l'app.
 - [ ] **Templates d'e-mail** (optionnel mais conseillé) : traduire « Magic Link » en français. Garder `{{ .ConfirmationURL }}` comme lien.
 - [ ] **SMTP personnalisé (indispensable avant de vrais utilisateurs).** L'envoi d'e-mails intégré à Supabase est limité à quelques messages par heure et réservé aux tests. Configurer un fournisseur dans **Authentication → Emails → SMTP Settings**, avec un expéditeur sur ton domaine (SPF/DKIM configurés).
 
@@ -136,6 +137,7 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 
 - [ ] **Connexion** : `/login` → « Recevoir un lien par e-mail », cliquer le lien. On arrive sur l'écran « Bienvenue ».
 - [ ] **Mot de passe** : Réglages → « Mot de passe » → enregistrer ; se déconnecter ; se reconnecter avec e-mail + mot de passe. Un mauvais mot de passe affiche « E-mail ou mot de passe incorrect. »
+- [ ] **Mot de passe oublié** : sur la page de connexion, saisir l'e-mail → « Mot de passe oublié ? ». Ouvrir l'e-mail **sur le même téléphone**, choisir un nouveau mot de passe : on arrive connecté sur l'accueil. L'ancien mot de passe ne fonctionne plus.
 - [ ] **Profil** : nom, adresse, NEQ, licence RBQ, n° de TPS (`123456789 RT0001`) et de TVQ (`1234567890 TQ0001`), assurance, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
 - [ ] **Stripe Connect** : Réglages → « Activer les paiements ». Remplir le formulaire Stripe avec les données de test (Stripe propose « Use test data »). Au retour, on doit lire « Activés » et le bandeau disparaît.
   - Si le statut reste « incomplet », vérifier dans Stripe que le webhook 2 reçoit bien `account.updated`.

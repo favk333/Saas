@@ -14,7 +14,7 @@ Mise en production : voir **[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)**.
 
 Sans `.env.local`, l'app tourne en **mode démo** : données fictives, pas de connexion, pas d'enregistrement.
 
-Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` aux Redirect URLs.
+Supabase : appliquer la migration, puis dans *Authentication → URL Configuration* ajouter `<APP_URL>/auth/callback` (lien de connexion) et `<APP_URL>/auth/reset` (mot de passe oublié) aux Redirect URLs.
 
 ## Structure
 
@@ -42,6 +42,8 @@ app/
     reglages/releves/[mois]/pdf  ✓ relevé mensuel des commissions (PDF)
   (auth)/login/                  ✓ connexion e-mail + mot de passe, ou lien par e-mail (comptes sans mot de passe)
   auth/callback/route.ts         ✓ retour du lien magique
+  auth/reset/route.ts            ✓ retour du lien « mot de passe oublié » → /reinitialiser
+  (auth)/reinitialiser/          ✓ choix du nouveau mot de passe (session de récupération)
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
   s/[token]/pdf/route.ts         ✓ PDF pour le client (par jeton)
   api/
