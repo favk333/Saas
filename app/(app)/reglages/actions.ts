@@ -73,3 +73,22 @@ export async function signOut() {
   if (isSupabaseConfigured) await (await createClient()).auth.signOut();
   redirect("/login");
 }
+
+/** Définit ou change le mot de passe (comptes créés par lien magique : ils n'en ont pas). */
+export async function setPassword(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < 8) return { error: "8 caractères minimum." };
+  if (password !== confirm) return { error: "Les deux mots de passe ne correspondent pas." };
+  if (!isSupabaseConfigured) return { error: DEMO };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    if (error.code === "weak_password") return { error: "Mot de passe trop faible. Choisissez-en un plus long." };
+    if (error.code === "same_password") return { error: "C'est déjà votre mot de passe." };
+    if (error.code === "reauthentication_needed") return { error: "Reconnectez-vous, puis réessayez." };
+    return { error: "Enregistrement impossible. Réessayez." };
+  }
+  return { error: null, done: true };
+}

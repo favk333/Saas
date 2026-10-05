@@ -37,10 +37,10 @@ app/
     soumissions/[id]/signer/page.tsx ✓ signature tactile sur place
     soumissions/[id]/pdf/route.ts    ✓ PDF soumission / facture (artisan connecté)
     soumissions/[id]/actions.ts      ✓ signer, générer / envoyer le lien
-    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, déconnexion
+    reglages/page.tsx            ✓ profil entreprise, taxes par défaut, n° TPS / TVQ, Stripe, mot de passe, déconnexion
     reglages/actions.ts          ✓ enregistrer, lancer l'onboarding Stripe
     reglages/releves/[mois]/pdf  ✓ relevé mensuel des commissions (PDF)
-  (auth)/login/page.tsx          ✓ connexion (lien magique e-mail)
+  (auth)/login/                  ✓ connexion e-mail + mot de passe, ou lien par e-mail (comptes sans mot de passe)
   auth/callback/route.ts         ✓ retour du lien magique
   s/[token]/page.tsx             ✓ signature à distance + paiement (public)
   s/[token]/pdf/route.ts         ✓ PDF pour le client (par jeton)

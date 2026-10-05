@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { LogoutButton } from "@/components/settings/logout-button";
+import { PasswordSection } from "@/components/settings/password-section";
 import { PaymentsSection } from "@/components/settings/payments-section";
 import { ProfileForm, Section } from "@/components/settings/profile-form";
 import { StatementsSection } from "@/components/settings/statements-section";
@@ -42,6 +43,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <>
           <PaymentsSection accountId={profile.stripe_account_id} enabled={profile.stripe_charges_enabled} failed={stripe === "erreur"} fee={feeInfoSafe()} />
           <StatementsSection months={monthsOf(commissionRows)} />
+          <PasswordSection />
           <Section title="Compte">
             {profile.email && <p className="text-[15px]">{profile.email}</p>}
             <LogoutButton userId={userId} />
