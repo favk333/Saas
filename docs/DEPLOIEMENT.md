@@ -45,7 +45,7 @@ Durée estimée : 2 à 3 h la première fois, hors délais de validation Stripe 
 
 ## 2. Supabase : authentification
 
-- [ ] **Authentication → Sign In / Providers → Email** : activé. Le lien magique est envoyé par e-mail, aucun mot de passe n'est utilisé.
+- [ ] **Authentication → Sign In / Providers → Email** : activé. Connexion par **e-mail + mot de passe** ; le lien par e-mail reste proposé (comptes sans mot de passe, première connexion). Les mots de passe se définissent dans Réglages → « Mot de passe » (8 caractères minimum ; Supabase peut imposer davantage dans *Password requirements*).
 - [ ] **Authentication → URL Configuration** :
   - Site URL : `https://<domaine>`
   - Redirect URLs : `https://<domaine>/auth/callback`. Ajouter aussi `http://localhost:3000/auth/callback` pour le développement.
@@ -134,7 +134,8 @@ Commencer en **mode test** : le sélecteur est en haut à droite du dashboard St
 
 À faire sur ton téléphone, avec l'URL de production et Stripe en mode test.
 
-- [ ] **Connexion** : `/login`, recevoir l'e-mail, cliquer le lien. On arrive sur l'écran « Bienvenue ».
+- [ ] **Connexion** : `/login` → « Recevoir un lien par e-mail », cliquer le lien. On arrive sur l'écran « Bienvenue ».
+- [ ] **Mot de passe** : Réglages → « Mot de passe » → enregistrer ; se déconnecter ; se reconnecter avec e-mail + mot de passe. Un mauvais mot de passe affiche « E-mail ou mot de passe incorrect. »
 - [ ] **Profil** : nom, adresse, NEQ, licence RBQ, n° de TPS (`123456789 RT0001`) et de TVQ (`1234567890 TQ0001`), assurance, puis « Continuer ». On arrive sur l'accueil, qui affiche le bandeau « Paiements en ligne non activés ».
 - [ ] **Stripe Connect** : Réglages → « Activer les paiements ». Remplir le formulaire Stripe avec les données de test (Stripe propose « Use test data »). Au retour, on doit lire « Activés » et le bandeau disparaît.
   - Si le statut reste « incomplet », vérifier dans Stripe que le webhook 2 reçoit bien `account.updated`.
