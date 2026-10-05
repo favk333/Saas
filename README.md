@@ -100,6 +100,7 @@ supabase/
   migrations/0008_offline_signature.sql  ✓ signed_offline (signature faite sans réseau)
   migrations/0009_platform_fee.sql       ✓ platform_fee_cents (commission avant taxes)
   migrations/0010_platform_fee_taxes.sql ✓ TPS / TVQ sur la commission
+  templates/reinitialisation-mot-de-passe.html ✓ e-mail « mot de passe oublié » en français (à coller dans Supabase)
 ```
 
 ## Base de données

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <!--
+    Supabase → Authentication → Emails → Templates → « Reset Password »
+    Objet : Choisissez un nouveau mot de passe
+    Variables Supabase utilisées : .ConfirmationURL (lien de réinitialisation) et .Email
+    Mise en page en tableaux et styles en ligne : compatible Gmail, Outlook, Apple Mail.
+  -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Choisissez un nouveau mot de passe</title>
+</head>
+<body style="margin:0; padding:0; background:#F9FAFB;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F9FAFB;">
+    <tr>
+      <td align="center" style="padding:24px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:480px; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:6px;">
+          <tr>
+            <td style="padding:28px 24px 8px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#111827;">
+              <p style="margin:0 0 20px; font-size:15px; font-weight:600;">Chantier</p>
+              <h1 style="margin:0 0 12px; font-size:22px; line-height:28px; font-weight:600;">Choisissez un nouveau mot de passe</h1>
+              <p style="margin:0 0 24px; font-size:15px; line-height:22px; color:#374151;">
+                Une demande de réinitialisation a été faite pour le compte <strong style="color:#111827;">{{ .Email }}</strong>.
+                Appuyez sur le bouton pour choisir un nouveau mot de passe.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#111827" style="border-radius:6px;">
+                    <a href="{{ .ConfirmationURL }}"
+                      style="display:block; padding:16px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; font-weight:600; line-height:20px; color:#FFFFFF; text-decoration:none; border-radius:6px;">
+                      Choisir un nouveau mot de passe
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 24px 28px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:19px; color:#6B7280;">
+              <p style="margin:0 0 12px;">
+                <strong style="color:#111827;">Ouvrez ce lien sur le téléphone où vous avez fait la demande.</strong>
+                Par sécurité, il ne fonctionne qu'une fois, et seulement sur cet appareil.
+              </p>
+              <p style="margin:0 0 12px;">
+                Vous n'êtes pas à l'origine de cette demande ? Ignorez cet e-mail : votre mot de passe reste inchangé.
+              </p>
+              <p style="margin:0;">
+                Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+                <a href="{{ .ConfirmationURL }}" style="color:#111827; word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
