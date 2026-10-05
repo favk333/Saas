@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <!--
+    Supabase → Authentication → Emails → Templates → « Change Email Address »
+    Objet : Confirmez votre nouvelle adresse e-mail
+    Envoyé aux deux adresses (ancienne et nouvelle) si « Secure email change » est activé.
+    Variables Supabase utilisées : .ConfirmationURL (lien de confirmation), .Email (adresse actuelle) et .NewEmail (nouvelle adresse)
+    Mise en page en tableaux et styles en ligne : compatible Gmail, Outlook, Apple Mail.
+  -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Confirmez votre nouvelle adresse e-mail</title>
+</head>
+<body style="margin:0; padding:0; background:#F9FAFB;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F9FAFB;">
+    <tr>
+      <td align="center" style="padding:24px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:480px; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:6px;">
+          <tr>
+            <td style="padding:28px 24px 8px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#111827;">
+              <p style="margin:0 0 20px; font-size:15px; font-weight:600;">Chantier</p>
+              <h1 style="margin:0 0 12px; font-size:22px; line-height:28px; font-weight:600;">Confirmez votre nouvelle adresse e-mail</h1>
+              <p style="margin:0 0 24px; font-size:15px; line-height:22px; color:#374151;">
+                Une demande de changement d'adresse e-mail a été faite pour votre compte Chantier :
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px; border:1px solid #E5E7EB; border-radius:6px;">
+                <tr>
+                  <td style="padding:10px 12px; font-size:13px; color:#6B7280; border-bottom:1px solid #E5E7EB;">
+                    Adresse actuelle<br><span style="font-size:15px; color:#111827; word-break:break-all;">{{ .Email }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 12px; font-size:13px; color:#6B7280;">
+                    Nouvelle adresse<br><strong style="font-size:15px; color:#111827; word-break:break-all;">{{ .NewEmail }}</strong>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 24px; font-size:15px; line-height:22px; color:#374151;">
+                Appuyez sur le bouton pour confirmer le changement.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#111827" style="border-radius:6px;">
+                    <a href="{{ .ConfirmationURL }}"
+                      style="display:block; padding:16px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; font-weight:600; line-height:20px; color:#FFFFFF; text-decoration:none; border-radius:6px;">
+                      Confirmer le changement
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 24px 28px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:19px; color:#6B7280;">
+              <p style="margin:0 0 12px;">
+                Ce lien ne fonctionne qu'une fois. Une fois le changement confirmé, connectez-vous avec la nouvelle adresse.
+              </p>
+              <p style="margin:0 0 12px;">
+                <strong style="color:#111827;">Vous n'êtes pas à l'origine de cette demande ?</strong>
+                N'appuyez pas sur le bouton : l'adresse reste inchangée. Par précaution, changez votre mot de passe dans Réglages.
+              </p>
+              <p style="margin:0;">
+                Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+                <a href="{{ .ConfirmationURL }}" style="color:#111827; word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
