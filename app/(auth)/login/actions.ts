@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-export type LoginState = { error: string | null; sent?: boolean };
+export type LoginState = { error: string | null; sent?: boolean; resetSent?: boolean };
 
 const DEMO = "Mode démo : connexion désactivée (configurez Supabase).";
 
@@ -40,16 +40,35 @@ export async function signInWithPassword(_prev: LoginState, formData: FormData):
   redirect("/");
 }
 
+async function appOrigin() {
+  const h = await headers();
+  return process.env.NEXT_PUBLIC_APP_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+}
+
+/**
+ * Mot de passe oublié : e-mail avec un lien vers /auth/reset, puis /reinitialiser.
+ * Même réponse que le compte existe ou non (pas de divulgation des comptes).
+ */
+export async function requestPasswordReset(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email.includes("@")) return { error: "Saisissez votre e-mail pour réinitialiser le mot de passe." };
+  if (!isSupabaseConfigured) return { error: DEMO };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await appOrigin()}/auth/reset` });
+  if (error && (error.status === 429 || error.code?.startsWith("over_"))) return { error: authMessage(error) };
+  if (error) return { error: "Envoi impossible pour le moment. Réessayez." };
+  return { error: null, resetSent: true };
+}
+
 /** Lien de connexion par e-mail : comptes sans mot de passe, première connexion. */
 export async function sendMagicLink(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim();
   if (!email.includes("@")) return { error: "Saisissez votre e-mail pour recevoir le lien." };
   if (!isSupabaseConfigured) return { error: DEMO };
 
-  const h = await headers();
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/auth/callback` } });
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${await appOrigin()}/auth/callback` } });
   if (error) return { error: authMessage(error) };
   return { error: null, sent: true };
 }
